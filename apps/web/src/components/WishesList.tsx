@@ -13,8 +13,11 @@ export const WishesList = () => {
     useEffect(() => {
         const fetchWishes = async () => {
             try {
-                const res = await axios.get('/api/rsvp/wishes');
-                setWishes(res.data);
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const res = await axios.get(`${apiUrl}/api/rsvp/wishes`);
+                if (Array.isArray(res.data)) {
+                    setWishes(res.data);
+                }
             } catch (e) {
                 console.error("Failed to fetch wishes", e);
             }

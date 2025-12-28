@@ -16,7 +16,7 @@ export const GiftSection = () => {
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                {weddingConfig.gift.accounts.map((account, index) => (
+                {weddingConfig.gift.accounts?.length > 0 && weddingConfig.gift.accounts.map((account, index) => (
                     <div key={index} className="bg-night-800/50 p-8 rounded-xl border border-accent-green/30 hover:border-accent-green/60 transition-colors group">
                         <div className="mb-6">
                             <div className="text-left">
