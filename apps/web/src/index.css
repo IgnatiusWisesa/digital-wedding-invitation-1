@@ -1,0 +1,48 @@
+/* Google Fonts - Garden Party Theme */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Great+Vibes&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-b from-sunset-peach via-sunset-purple to-garden-night text-cream font-sans;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif text-cream;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+
+  /* Lantern glow effect */
+  .lantern-glow {
+    box-shadow: 0 0 20px rgba(244, 164, 96, 0.3),
+      0 0 40px rgba(244, 164, 96, 0.2),
+      0 0 60px rgba(244, 164, 96, 0.1);
+  }
+
+  /* Warm card style */
+  .warm-card {
+    @apply bg-gradient-to-br from-garden-night/80 to-sunset-purple/60 backdrop-blur-sm border border-lantern-glow/30 rounded-2xl shadow-2xl;
+  }
+
+  /* Readable text on dark backgrounds */
+  .text-readable {
+    @apply text-cream;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+}
