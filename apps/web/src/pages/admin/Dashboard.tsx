@@ -195,7 +195,7 @@ export const AdminDashboard = () => {
                     setScanResult('❌ Check-in failed');
                 }
             },
-            (error) => {
+            (_error) => {
                 // Ignore scan errors
             }
         );
