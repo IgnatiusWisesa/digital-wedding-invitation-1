@@ -1,6 +1,7 @@
-// Lights of Hope App
+// Lights of Hope App - Romantic Lantern Festival
 import React from 'react'
 import { Lanterns } from './components/Lanterns'
+import { Stars } from './components/Stars'
 import { RsvpForm } from './components/RsvpForm'
 import { AudioPlayer } from './components/AudioPlayer'
 import { Couple } from './components/Couple'
@@ -13,13 +14,14 @@ import { weddingConfig } from './config/wedding'
 
 function App() {
     return (
-        <div className="min-h-screen bg-gradient-to-b from-sunset-peach via-sunset-purple to-garden-night text-cream font-sans selection:bg-lantern-glow selection:text-garden-dark pb-20">
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans selection:bg-orange-500 selection:text-white pb-20">
             <AudioPlayer />
 
-            {/* Fixed Background - Lanterns */}
+            {/* Fixed Background - Stars & Lanterns */}
+            <Stars />
             <div className="fixed inset-0 pointer-events-none z-0">
                 <Lanterns />
-                <div className="absolute inset-0 bg-gradient-to-b from-lantern-glow/5 via-transparent to-sunset-purple/10 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 via-transparent to-orange-900/10 pointer-events-none"></div>
             </div>
 
             {/* Hero Section - Garden Party */}
