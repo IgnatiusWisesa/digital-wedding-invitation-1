@@ -7,8 +7,13 @@ export const Lanterns = () => {
     'rgba(255, 160, 80, 0.9)',  // Warm orange
   ];
 
-  // Generate 25 lanterns with random properties including rotation and depth
-  const lanterns = Array.from({ length: 25 }, (_, i) => ({
+  // Responsive: fewer and smaller lanterns on mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const lanternCount = isMobile ? 15 : 25; // 15 on mobile, 25 on desktop
+  const sizeMultiplier = isMobile ? 800 : 1200; // Smaller on mobile (40-80px vs 60-120px)
+
+  // Generate lanterns with random properties including rotation and depth
+  const lanterns = Array.from({ length: lanternCount }, (_, i) => ({
     id: i,
     left: Math.random() * 100, // 0-100%
     size: Math.random() * 0.05 + 0.05, // 0.05-0.1 (5-10% of original, very small)
@@ -30,7 +35,7 @@ export const Lanterns = () => {
           className="lantern"
           style={{
             left: `${lantern.left}%`,
-            width: `${lantern.size * 1200}px`, // 60-120px width (20x larger)
+            width: `${lantern.size * sizeMultiplier}px`, // Responsive: 40-80px mobile, 60-120px desktop
             animationDuration: `${lantern.duration}s`,
             animationDelay: `${lantern.delay}s`,
             '--sway': `${lantern.sway}px`,
