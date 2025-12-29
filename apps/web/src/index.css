@@ -50,14 +50,14 @@
   .lantern {
     position: absolute;
     animation: float-up linear infinite;
-    filter: drop-shadow(0 0 15px rgba(255, 140, 0, 0.8)) drop-shadow(0 0 30px rgba(255, 140, 0, 0.5));
     pointer-events: none;
     will-change: transform, opacity;
+    transform-style: preserve-3d;
   }
 
   @keyframes float-up {
     0% {
-      transform: translateY(100vh) translateX(0) rotate(0deg);
+      transform: translateY(100vh) translateX(0) rotate(var(--rotation-start));
       opacity: 0;
     }
 
@@ -70,7 +70,7 @@
     }
 
     100% {
-      transform: translateY(-20vh) translateX(var(--sway)) rotate(5deg);
+      transform: translateY(-20vh) translateX(var(--sway)) rotate(var(--rotation-end));
       opacity: 0;
     }
   }
