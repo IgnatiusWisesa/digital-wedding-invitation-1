@@ -39,7 +39,7 @@ function App() {
                         fontFamily: '"Great Vibes", cursive',
                         textShadow: '0 0 30px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.3)'
                     }}>
-                        {weddingConfig.couple.groom.nickname} & <p> </p> {weddingConfig.couple.bride.nickname}
+                        {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname}
                     </h1>
 
                     {/* Date */}
