@@ -60,7 +60,14 @@ export const Events = () => {
                     {weddingConfig.timeline?.length > 0 && weddingConfig.timeline.map((item, idx) => (
                         <div key={idx} className="text-center group">
                             <div className="flex flex-col items-center gap-2">
-                                <span className="text-3xl">{item.icon}</span>
+                                {/* Lantern icon - zoomed and cropped to hide string */}
+                                <div className="w-12 h-12 overflow-hidden relative">
+                                    <img
+                                        src="/asset/section_lantern.png"
+                                        alt="lantern"
+                                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-16 object-cover"
+                                    />
+                                </div>
                                 <div>
                                     <h4 className="text-white font-serif text-lg">{item.event}</h4>
                                     <p className="text-gray-400 text-sm">{item.time}</p>
