@@ -41,11 +41,11 @@ export const Couple = () => {
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-8">
                 <div className="w-20 h-px bg-gradient-to-r from-transparent to-orange-500/30"></div>
-                <div className="w-14 h-14 overflow-hidden relative">
+                <div className="w-18 h-18 overflow-hidden relative">
                     <img
                         src="/asset/section_lantern.png"
                         alt="lantern"
-                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-20 h-20 object-cover"
+                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-26 h-26 object-cover"
                     />
                 </div>
                 <div className="w-20 h-px bg-gradient-to-l from-transparent to-orange-500/30"></div>
