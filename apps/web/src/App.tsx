@@ -72,12 +72,9 @@ function App() {
             <WishesList />
 
             {/* Footer */}
-            <footer className="relative z-10 text-center py-12 mt-20 border-t border-accent-brown/20">
-                <p className="text-gray-600 text-sm">
-                    Made with 💛 for {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname}
-                </p>
-                <p className="text-gray-500 text-xs mt-2">
-                    © 2024 Digital Wedding Invitation
+            <footer className="relative z-10 text-center py-8 mt-20 border-t border-accent-brown/20">
+                <p className="text-gray-600 text-xs">
+                    Made with love by {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname} © 2025
                 </p>
             </footer>
         </div>
