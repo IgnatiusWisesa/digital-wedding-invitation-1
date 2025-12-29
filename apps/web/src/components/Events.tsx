@@ -55,17 +55,12 @@ export const Events = () => {
 
             {/* Schedule Timeline */}
             <div className="max-w-2xl mx-auto">
-                <h3 className="font-serif text-2xl text-white mb-8">Timeline</h3>
-                <div className="relative border-l-2 border-accent-green/30 ml-4 md:mx-auto md:w-3/4 text-left pl-8 space-y-8 py-4">
-                    <div className="absolute top-0 bottom-0 left-[-5px] w-2 bg-gradient-to-b from-accent-green/30 via-accent-green/20 to-accent-green/30"></div>
-
+                <h3 className="font-serif text-2xl text-white mb-8 text-center">Timeline</h3>
+                <div className="space-y-8 py-4">
                     {weddingConfig.timeline?.length > 0 && weddingConfig.timeline.map((item, idx) => (
-                        <div key={idx} className="relative group">
-                            <span className="absolute -left-[41px] bg-night-900 border-2 border-accent-green w-6 h-6 rounded-full group-hover:scale-125 transition-transform duration-300 flex items-center justify-center">
-                                <span className="w-2 h-2 bg-accent-green rounded-full"></span>
-                            </span>
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl">{item.icon}</span>
+                        <div key={idx} className="text-center group">
+                            <div className="flex flex-col items-center gap-2">
+                                <span className="text-3xl">{item.icon}</span>
                                 <div>
                                     <h4 className="text-white font-serif text-lg">{item.event}</h4>
                                     <p className="text-gray-400 text-sm">{item.time}</p>
