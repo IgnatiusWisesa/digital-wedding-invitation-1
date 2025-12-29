@@ -6,7 +6,7 @@ export const Stars = () => {
         id: i,
         left: Math.random() * 100,
         top: Math.random() * 100,
-        size: Math.random() * 2 + 1, // 1-3px
+        size: Math.random() * 2.4 + 1.2, // 1.2-3.6px (20% larger)
         duration: Math.random() * 3 + 2, // 2-5s
         delay: Math.random() * 5, // 0-5s
     }));
