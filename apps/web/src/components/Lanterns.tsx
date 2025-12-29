@@ -44,7 +44,15 @@ export const Lanterns = () => {
             '--rotation-end': string;
           }}
         >
-          🏮
+          <img
+            src="/asset/lantern.png"
+            alt="lantern"
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block'
+            }}
+          />
         </div>
       ))}
     </>
