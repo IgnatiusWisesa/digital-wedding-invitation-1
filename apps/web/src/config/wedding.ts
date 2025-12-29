@@ -55,7 +55,7 @@ export const weddingConfig = {
         {
             time: import.meta.env.VITE_TIMELINE_4_TIME || '09:00 PM',
             event: import.meta.env.VITE_TIMELINE_4_EVENT || 'After Party',
-            icon: import.meta.env.VITE_TIMELINE_4_ICON || '🎊',
+            icon: import.meta.env.VITE_TIMELINE_4_ICON || '🍾',
         },
     ],
 

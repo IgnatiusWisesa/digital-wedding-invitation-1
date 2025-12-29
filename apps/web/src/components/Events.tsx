@@ -60,14 +60,7 @@ export const Events = () => {
                     {weddingConfig.timeline?.length > 0 && weddingConfig.timeline.map((item, idx) => (
                         <div key={idx} className="text-center group">
                             <div className="flex flex-col items-center gap-2">
-                                {/* Lantern icon - zoomed and cropped to hide string */}
-                                <div className="w-12 h-12 overflow-hidden relative">
-                                    <img
-                                        src="/asset/section_lantern.png"
-                                        alt="lantern"
-                                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-16 object-cover"
-                                    />
-                                </div>
+                                <span className="text-3xl">{item.icon}</span>
                                 <div>
                                     <h4 className="text-white font-serif text-lg">{item.event}</h4>
                                     <p className="text-gray-400 text-sm">{item.time}</p>
@@ -80,9 +73,15 @@ export const Events = () => {
 
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-12">
-                <div className="w-20 h-px bg-gradient-to-r from-transparent to-accent-green/50"></div>
-                <span className="text-accent-yellow text-2xl">🏮</span>
-                <div className="w-20 h-px bg-gradient-to-l from-transparent to-accent-green/50"></div>
+                <div className="w-20 h-px bg-gradient-to-r from-transparent to-orange-500/30"></div>
+                <div className="w-12 h-12 overflow-hidden relative">
+                    <img
+                        src="/asset/section_lantern.png"
+                        alt="lantern"
+                        className="absolute -top-2 left-1/2 -translate-x-1/2 w-16 h-16 object-cover"
+                    />
+                </div>
+                <div className="w-20 h-px bg-gradient-to-l from-transparent to-orange-500/30"></div>
             </div>
         </Section>
     );
