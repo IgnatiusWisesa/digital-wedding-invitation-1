@@ -30,7 +30,7 @@ export const Lanterns = () => {
           className="lantern"
           style={{
             left: `${lantern.left}%`,
-            width: `${lantern.size * 60}px`, // 3-6px width (very small)
+            width: `${lantern.size * 1200}px`, // 60-120px width (20x larger)
             animationDuration: `${lantern.duration}s`,
             animationDelay: `${lantern.delay}s`,
             '--sway': `${lantern.sway}px`,
