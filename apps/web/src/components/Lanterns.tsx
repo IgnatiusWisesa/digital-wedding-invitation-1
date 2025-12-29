@@ -1,17 +1,14 @@
 import React from 'react';
 
 export const Lanterns = () => {
-  // Warm yellow color palette for lanterns
+  // Two warm yellow color variations
   const warmColors = [
     'rgba(255, 200, 0, 0.9)',   // Bright golden yellow
-    'rgba(255, 180, 50, 0.9)',  // Warm amber
-    'rgba(255, 160, 80, 0.9)',  // Peachy orange
-    'rgba(255, 140, 0, 0.9)',   // Deep orange
-    'rgba(255, 220, 100, 0.9)', // Light golden
+    'rgba(255, 160, 80, 0.9)',  // Warm orange
   ];
 
-  // Generate 12 lanterns with random properties
-  const lanterns = Array.from({ length: 12 }, (_, i) => ({
+  // Generate 25 lanterns with random properties
+  const lanterns = Array.from({ length: 25 }, (_, i) => ({
     id: i,
     left: Math.random() * 100, // 0-100%
     size: Math.random() * 0.5 + 0.8, // 0.8-1.3

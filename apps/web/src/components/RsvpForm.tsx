@@ -95,7 +95,7 @@ export const RsvpForm: React.FC = () => {
 
 
     return (
-        <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto warm-card p-8 z-10 lantern-glow">
+        <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto warm-card p-8 relative z-10 lantern-glow">
             <div className="mb-6">
                 <label className="block text-lantern-light text-base font-semibold mb-3 font-serif" htmlFor="name">
                     Name
