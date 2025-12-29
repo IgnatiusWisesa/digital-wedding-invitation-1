@@ -26,7 +26,7 @@ function App() {
 
             {/* Hero Section - Garden Party */}
             <section className="min-h-screen flex flex-col items-center justify-center p-4 relative z-20 text-center">
-                <div className="mb-8 animate-fade-in-down p-8">
+                <div className="mb-8 animate-fade-in-down p-8 -mt-16 md:mt-0">
                     {/* Subtitle */}
                     <div className="mb-8">
                         <span className="text-white text-xs md:text-sm uppercase tracking-[0.5em] border-y border-white/50 py-3 px-6 inline-block">
