@@ -74,11 +74,12 @@ export const Events = () => {
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-12">
                 <div className="w-20 h-px bg-gradient-to-r from-transparent to-orange-500/30"></div>
-                <div className="w-18 h-18 overflow-hidden relative">
+                <div className="overflow-hidden relative" style={{ width: '72px', height: '72px' }}>
                     <img
                         src="/asset/section_lantern.png"
                         alt="lantern"
-                        className="absolute -top-3 left-1/2 -translate-x-1/2 w-26 h-26 object-cover"
+                        className="absolute left-1/2 -translate-x-1/2 object-cover"
+                        style={{ top: '-12px', width: '104px', height: '104px' }}
                     />
                 </div>
                 <div className="w-20 h-px bg-gradient-to-l from-transparent to-orange-500/30"></div>
