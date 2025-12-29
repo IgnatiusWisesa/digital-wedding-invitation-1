@@ -31,18 +31,18 @@ export const WishesList = () => {
     if (wishes.length === 0) return null;
 
     return (
-        <div className="mt-12 w-full max-w-2xl mx-auto">
-            <h3 className="font-serif text-2xl text-gold-300 mb-6 text-center">Wishes from Friends & Family</h3>
-            <div className="bg-night-800/30 border border-gold-900/30 rounded-lg p-6 max-h-96 overflow-y-auto space-y-4 custom-scrollbar">
+        <div className="mt-12 w-full max-w-2xl mx-auto relative z-10">
+            <h3 className="font-serif text-2xl text-white mb-6 text-center drop-shadow-lg">Wishes from Friends & Family</h3>
+            <div className="bg-gray-900/50 border border-orange-500/30 rounded-lg p-6 max-h-96 overflow-y-auto space-y-4 backdrop-blur-sm">
                 {wishes.map((wish, idx) => (
-                    <div key={idx} className="border-b border-gold-900/50 pb-4 last:border-0 last:pb-0">
+                    <div key={idx} className="border-b border-orange-500/20 pb-4 last:border-0 last:pb-0">
                         <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-bold text-gold-200">{wish.name}</h4>
+                            <h4 className="font-bold text-white">{wish.name}</h4>
                             <span className={`text-[10px] px-2 py-1 rounded-full ${wish.attendanceStatus === 'Hadir' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
                                 {wish.attendanceStatus === 'Hadir' ? 'Attending' : 'Cannot Attend'}
                             </span>
                         </div>
-                        <p className="text-gold-100/80 text-sm font-light italic">"{wish.note}"</p>
+                        <p className="text-cream/80 text-sm font-light italic">"{wish.note}"</p>
                     </div>
                 ))}
             </div>
