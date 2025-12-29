@@ -11,7 +11,7 @@ export const Lanterns = () => {
   const lanterns = Array.from({ length: 25 }, (_, i) => ({
     id: i,
     left: Math.random() * 100, // 0-100%
-    size: Math.random() * 0.3 + 0.3, // 0.3-0.6 (much smaller, emoji-sized)
+    size: Math.random() * 0.05 + 0.05, // 0.05-0.1 (5-10% of original, very small)
     duration: Math.random() * 15 + 20, // 20-35s
     delay: Math.random() * -20, // -20 to 0s (stagger start)
     sway: (Math.random() - 0.5) * 40, // -20 to 20px
