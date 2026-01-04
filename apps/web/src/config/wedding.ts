@@ -36,28 +36,64 @@ export const weddingConfig = {
         mapLink: import.meta.env.VITE_RECEPTION_MAP_LINK || 'https://goo.gl/maps/placeholder',
     },
 
-    timeline: [
-        {
-            time: import.meta.env.VITE_TIMELINE_1_TIME || '09:00 AM',
-            event: import.meta.env.VITE_TIMELINE_1_EVENT || 'Blessing Ceremony',
-            icon: import.meta.env.VITE_TIMELINE_1_ICON || '⛪',
-        },
-        {
-            time: import.meta.env.VITE_TIMELINE_2_TIME || '01:00 PM',
-            event: import.meta.env.VITE_TIMELINE_2_EVENT || 'Tea Pai',
-            icon: import.meta.env.VITE_TIMELINE_2_ICON || '🍵',
-        },
-        {
-            time: import.meta.env.VITE_TIMELINE_3_TIME || '06:00 PM',
-            event: import.meta.env.VITE_TIMELINE_3_EVENT || 'Wedding Reception',
-            icon: import.meta.env.VITE_TIMELINE_3_ICON || '🎉',
-        },
-        {
-            time: import.meta.env.VITE_TIMELINE_4_TIME || '09:00 PM',
-            event: import.meta.env.VITE_TIMELINE_4_EVENT || 'After Party',
-            icon: import.meta.env.VITE_TIMELINE_4_ICON || '🍾',
-        },
-    ],
+    timeline: (() => {
+        const timelineItems = [];
+        let index = 1;
+        
+        // Keep checking for timeline items until we find a missing one
+        while (true) {
+            const time = import.meta.env[`VITE_TIMELINE_${index}_TIME`];
+            const event = import.meta.env[`VITE_TIMELINE_${index}_EVENT`];
+            const icon = import.meta.env[`VITE_TIMELINE_${index}_ICON`];
+            
+            // If time or event is missing, stop looking for more items
+            if (!time && !event) {
+                break;
+            }
+            
+            // Only add the item if it has at least a time or event
+            if (time || event) {
+                timelineItems.push({
+                    time: time || '',
+                    event: event || '',
+                    icon: icon || '📅',
+                });
+            }
+            
+            index++;
+            
+            // Safety limit to prevent infinite loop
+            if (index > 20) break;
+        }
+        
+        // If no timeline items found, return default timeline
+        if (timelineItems.length === 0) {
+            return [
+                {
+                    time: '09:00 AM',
+                    event: 'Blessing Ceremony',
+                    icon: '⛪',
+                },
+                {
+                    time: '01:00 PM',
+                    event: 'Tea Pai',
+                    icon: '🍵',
+                },
+                {
+                    time: '06:00 PM',
+                    event: 'Wedding Reception',
+                    icon: '🎉',
+                },
+                {
+                    time: '09:00 PM',
+                    event: 'After Party',
+                    icon: '🍾',
+                },
+            ];
+        }
+        
+        return timelineItems;
+    })(),
 
     gift: {
         accounts: [

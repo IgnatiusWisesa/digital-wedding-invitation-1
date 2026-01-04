@@ -1,31 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-export const AudioPlayer = () => {
+export interface AudioPlayerRef {
+    play: () => Promise<void>;
+}
+
+interface AudioPlayerProps {
+    onReady?: (ref: AudioPlayerRef) => void;
+}
+
+export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(({ onReady }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
-    useEffect(() => {
-        // Autoplay on mount
+    const playAudio = async () => {
         if (audioRef.current) {
-            audioRef.current.play()
-                .then(() => {
-                    setIsPlaying(true);
-                })
-                .catch(error => {
-                    console.log("Autoplay prevented by browser:", error);
-                    setIsPlaying(false);
-                });
+            try {
+                await audioRef.current.play();
+                setIsPlaying(true);
+            } catch (error) {
+                console.log("Play prevented:", error);
+                setIsPlaying(false);
+            }
         }
-    }, []);
+    };
+
+    useImperativeHandle(ref, () => ({
+        play: playAudio
+    }));
+
+    useEffect(() => {
+        if (onReady && audioRef.current) {
+            onReady({ play: playAudio });
+        }
+    }, [onReady]);
 
     const togglePlay = () => {
         if (audioRef.current) {
             if (isPlaying) {
                 audioRef.current.pause();
+                setIsPlaying(false);
             } else {
-                audioRef.current.play();
+                playAudio();
             }
-            setIsPlaying(!isPlaying);
         }
     };
 
@@ -52,4 +68,6 @@ export const AudioPlayer = () => {
             </button>
         </div>
     );
-};
+});
+
+AudioPlayer.displayName = 'AudioPlayer';
