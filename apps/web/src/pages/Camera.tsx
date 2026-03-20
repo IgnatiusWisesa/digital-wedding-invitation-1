@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import imageCompression from 'browser-image-compression';
 import { getApiUrl } from '../config/api';
 
-const MAX_QUOTA = 5;
+const MAX_QUOTA = 20;
 
 export const Camera: React.FC = () => {
     const [quota, setQuota] = useState<number>(MAX_QUOTA);
@@ -23,7 +23,7 @@ export const Camera: React.FC = () => {
         if (!file) return;
         
         if (quota <= 0) {
-            setErrorMsg('Anda sudah mencapai batas kuota foto (5/5).');
+            setErrorMsg('Anda sudah mencapai batas kuota foto (20/20).');
             return;
         }
 

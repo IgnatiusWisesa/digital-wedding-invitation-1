@@ -49,4 +49,9 @@ export class PhotosController {
   async getPhotos() {
     return this.photosService.findAll();
   }
+
+  @Post(':id/delete') // Using POST for easier admin bypass if needed, or stick to DELETE
+  async deletePhoto(@Body('id') id: string) {
+    return this.photosService.delete(id);
+  }
 }

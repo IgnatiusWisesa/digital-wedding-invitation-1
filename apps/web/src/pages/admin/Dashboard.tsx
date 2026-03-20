@@ -53,8 +53,10 @@ export const AdminDashboard = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
+    const [showPhotoDrive, setShowPhotoDrive] = useState(false);
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
     const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
+    const [photos, setPhotos] = useState<any[]>([]);
     const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', isCheckedIn: false });
     const username = localStorage.getItem('admin_username');
 
@@ -260,6 +262,30 @@ export const AdminDashboard = () => {
         }
     };
 
+    const fetchPhotos = async () => {
+        try {
+            const API_URL = getApiUrl();
+            const response = await fetch(`${API_URL}/api/photos`);
+            const data = await response.json();
+            setPhotos(data);
+        } catch (error) {
+            console.error('Failed to fetch photos:', error);
+        }
+    };
+
+    const handleDeletePhoto = async (photoId: string) => {
+        if (!window.confirm('Are you sure you want to delete this photo?')) return;
+        try {
+            const API_URL = getApiUrl();
+            const response = await axios.post(`${API_URL}/api/photos/${photoId}/delete`, { id: photoId });
+            if (response.status === 201 || response.status === 200) {
+                setPhotos(photos.filter(p => p._id !== photoId));
+            }
+        } catch (error) {
+            alert('Failed to delete photo');
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_username');
@@ -341,6 +367,15 @@ export const AdminDashboard = () => {
                         className="bg-accent-yellow hover:bg-accent-green text-night-900 px-6 py-2 rounded font-medium transition-all"
                     >
                         📷 {showScanner ? 'Close Scanner' : 'Scan QR'}
+                    </button>
+                    <button
+                        onClick={() => {
+                            fetchPhotos();
+                            setShowPhotoDrive(true);
+                        }}
+                        className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded font-medium transition-all"
+                    >
+                        🖼️ Photo Drive
                     </button>
                     <button
                         onClick={handleExport}
@@ -659,6 +694,65 @@ export const AdminDashboard = () => {
                         >
                             Close
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Photo Drive Modal */}
+            {showPhotoDrive && (
+                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-night-800 border border-purple-500/30 rounded-lg p-8 max-w-5xl w-full h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-serif text-accent-yellow">Photo Drive Gallery</h2>
+                            <button 
+                                onClick={() => setShowPhotoDrive(false)}
+                                className="text-white/60 hover:text-white"
+                            >
+                                ✕ Close
+                            </button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                            {photos.length === 0 ? (
+                                <div className="h-full flex items-center justify-center text-white/40 italic">
+                                    No photos uploaded yet.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {photos.map((photo) => (
+                                        <div key={photo._id} className="relative group aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                                            <img 
+                                                src={`${getApiUrl()}/uploads/${photo.filename}`} 
+                                                alt="Guest Memory"
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button 
+                                                    onClick={() => handleDeletePhoto(photo._id)}
+                                                    className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transform scale-90 group-hover:scale-100 transition-transform"
+                                                    title="Delete Photo"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                                                <p className="text-[10px] text-white/60 truncate">{new Date(photo.createdAt).toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="mt-6 pt-6 border-t border-white/10 flex justify-between items-center">
+                            <p className="text-white/40 text-sm">Total: {photos.length} photos</p>
+                            <button
+                                onClick={() => setShowPhotoDrive(false)}
+                                className="bg-night/50 hover:bg-night border border-white/20 text-white px-6 py-2 rounded"
+                            >
+                                Done
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

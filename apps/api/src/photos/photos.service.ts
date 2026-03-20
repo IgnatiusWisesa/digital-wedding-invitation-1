@@ -15,4 +15,16 @@ export class PhotosService {
   async findAll(): Promise<Photo[]> {
     return this.photoModel.find().sort({ createdAt: -1 }).exec();
   }
+
+  async delete(id: string): Promise<any> {
+    const photo = await this.photoModel.findById(id).exec();
+    if (photo) {
+      const filePath = `./uploads/${photo.filename}`;
+      const fs = await import('fs');
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      return this.photoModel.deleteOne({ _id: id }).exec();
+    }
+  }
 }
