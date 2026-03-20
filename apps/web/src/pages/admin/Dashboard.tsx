@@ -87,7 +87,8 @@ export const AdminDashboard = () => {
 
     const fetchStats = async () => {
         try {
-            const response = await axios.get('/api/admin/stats', axiosConfig);
+            const API_URL = getApiUrl();
+            const response = await axios.get(`${API_URL}/api/admin/stats`, axiosConfig);
             setStats(response.data);
         } catch (error: any) {
             if (error.response?.status === 401) {
@@ -99,7 +100,8 @@ export const AdminDashboard = () => {
     const fetchGuests = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`/api/admin/guests?page=${page}&limit=20&search=${search}`, axiosConfig);
+            const API_URL = getApiUrl();
+            const response = await axios.get(`${API_URL}/api/admin/guests?page=${page}&limit=20&search=${search}`, axiosConfig);
             setGuests(response.data.guests);
             setTotalPages(response.data.pagination.totalPages);
         } catch (error: any) {
@@ -115,8 +117,9 @@ export const AdminDashboard = () => {
         try {
             console.log('=== EXCEL EXPORT STARTED ===');
 
+            const API_URL = getApiUrl();
             // Fetch all guests data as JSON
-            const response = await axios.get('/api/admin/guests', {
+            const response = await axios.get(`${API_URL}/api/admin/guests`, {
                 ...axiosConfig,
                 params: { page: 1, limit: 1000 } // Get all guests
             });
@@ -180,7 +183,8 @@ export const AdminDashboard = () => {
             async (decodedText) => {
                 setScanResult('Processing...');
                 try {
-                    const response = await axios.post('/api/admin/checkin/scan',
+                    const API_URL = getApiUrl();
+                    const response = await axios.post(`${API_URL}/api/admin/checkin/scan`,
                         { qrData: decodedText },
                         axiosConfig
                     );
@@ -208,7 +212,8 @@ export const AdminDashboard = () => {
 
     const handleAddGuest = async () => {
         try {
-            const response = await axios.post('/api/admin/guests', formData, axiosConfig);
+            const API_URL = getApiUrl();
+            const response = await axios.post(`${API_URL}/api/admin/guests`, formData, axiosConfig);
             if (response.data.success) {
                 alert(`Guest added successfully! ${response.data.guest.ticketToken ? 'Ticket generated.' : ''}`);
                 setShowAddModal(false);
@@ -236,7 +241,8 @@ export const AdminDashboard = () => {
     const handleSaveEdit = async () => {
         if (!selectedGuest) return;
         try {
-            const response = await axios.patch(`/api/admin/guests/${selectedGuest._id}`, {
+            const API_URL = getApiUrl();
+            const response = await axios.patch(`${API_URL}/api/admin/guests/${selectedGuest._id}`, {
                 attendanceStatus: formData.attendanceStatus,
                 attendanceChoice: formData.attendanceChoice,
                 note: formData.note,

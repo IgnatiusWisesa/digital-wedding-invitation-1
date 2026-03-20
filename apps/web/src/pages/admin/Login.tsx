@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { getApiUrl } from '../../config/api';
 
 export const AdminLogin = () => {
     const [username, setUsername] = useState('');
@@ -28,8 +29,9 @@ export const AdminLogin = () => {
         setLoading(true);
 
         try {
-            console.log('Sending POST request to /api/admin/login...');
-            const response = await axios.post('/api/admin/login', {
+            const API_URL = getApiUrl();
+            console.log(`Sending POST request to ${API_URL}/api/admin/login...`);
+            const response = await axios.post(`${API_URL}/api/admin/login`, {
                 username,
                 password
             });
