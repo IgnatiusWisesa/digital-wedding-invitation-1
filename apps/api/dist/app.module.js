@@ -11,6 +11,8 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
 const throttler_1 = require("@nestjs/throttler");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const rsvp_module_1 = require("./rsvp/rsvp.module");
@@ -18,6 +20,7 @@ const queue_module_1 = require("./queue/queue.module");
 const bullmq_1 = require("@nestjs/bullmq");
 const checkin_module_1 = require("./checkin/checkin.module");
 const admin_module_1 = require("./admin/admin.module");
+const photos_module_1 = require("./photos/photos.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -59,10 +62,15 @@ exports.AppModule = AppModule = __decorate([
                 },
                 inject: [config_1.ConfigService],
             }),
+            serve_static_1.ServeStaticModule.forRoot({
+                rootPath: (0, path_1.join)(__dirname, '..', 'uploads'),
+                serveRoot: '/uploads',
+            }),
             rsvp_module_1.RsvpModule,
             queue_module_1.QueueModule,
             checkin_module_1.CheckinModule,
             admin_module_1.AdminModule,
+            photos_module_1.PhotosModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -6,6 +6,8 @@ import { AdminLogin } from './pages/admin/Login'
 import { AdminDashboard } from './pages/admin/Dashboard'
 import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { Camera } from './pages/Camera'
+import { LiveAlbum } from './pages/LiveAlbum'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -33,6 +35,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/eighteen" element={<App />} />
                 <Route path="/nineteen" element={<App />} />
                 <Route path="/twenty" element={<App />} />
+
+                {/* Live Collage Routes */}
+                <Route path="/snap" element={<Camera />} />
+                <Route path="/live-album" element={<LiveAlbum />} />
 
                 {/* Admin routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />

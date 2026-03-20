@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RsvpModule } from './rsvp/rsvp.module';
@@ -9,6 +11,7 @@ import { QueueModule } from './queue/queue.module';
 import { BullModule } from '@nestjs/bullmq';
 import { CheckinModule } from './checkin/checkin.module';
 import { AdminModule } from './admin/admin.module';
+import { PhotosModule } from './photos/photos.module';
 
 @Module({
   imports: [
@@ -49,10 +52,15 @@ import { AdminModule } from './admin/admin.module';
       },
       inject: [ConfigService],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     RsvpModule,
     QueueModule,
     CheckinModule,
     AdminModule,
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

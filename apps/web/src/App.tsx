@@ -1,5 +1,5 @@
 // Lights of Hope App - Romantic Lantern Festival
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Lanterns } from './components/Lanterns'
 import { Stars } from './components/Stars'
 import { RsvpForm } from './components/RsvpForm'
@@ -16,6 +16,18 @@ function App() {
     const [showSplash, setShowSplash] = useState(true)
     const audioPlayerRef = useRef<AudioPlayerRef | null>(null)
 
+    // Lock scroll while splash is showing
+    useEffect(() => {
+        if (showSplash) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = ''
+        }
+        return () => {
+            document.body.style.overflow = ''
+        }
+    }, [showSplash])
+
     const handleEnter = () => {
         setShowSplash(false)
         // Start music when user clicks enter
@@ -25,11 +37,22 @@ function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans selection:bg-orange-500 selection:text-white pb-20">
+        <div className={`min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans selection:bg-orange-500 selection:text-white pb-20 ${showSplash ? 'h-screen overflow-hidden' : ''}`}>
             {/* Splash Screen */}
             {showSplash && (
                 <div className="fixed inset-0 z-[100] bg-gradient-to-b from-gray-900 via-gray-950 to-black flex items-center justify-center">
                     <div className="text-center space-y-8 p-8 animate-fade-in-down">
+                        {/* Logo */}
+                        <div className="relative flex justify-center items-center mb-6">
+                            {/* Super strong background glow */}
+                            <div className="absolute w-40 h-40 md:w-56 md:h-56 bg-accent-yellow/40 blur-[50px] rounded-full"></div>
+                            {/* Oversized Logo with bright drop shadow */}
+                            <img
+                                src="/asset/logo.png"
+                                alt="Logo"
+                                className="relative z-10 w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-[0_0_40px_rgba(255,223,0,1)]"
+                            />
+                        </div>
                         <div className="mb-8">
                             <span className="text-white text-xs md:text-sm uppercase tracking-[0.5em] border-y border-white/50 py-3 px-6 inline-block">
                                 Lights of Hope
