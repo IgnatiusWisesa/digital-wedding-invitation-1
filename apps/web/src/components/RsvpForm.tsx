@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { TicketView } from './TicketView';
+import { getApiUrl } from '../config/api';
 
 // Map URL paths to guest quotas
 const PATH_TO_QUOTA: Record<string, number> = {
@@ -52,7 +53,8 @@ export const RsvpForm: React.FC = () => {
         setError('');
 
         try {
-            const response = await axios.post('/api/rsvp', {
+            const API_URL = getApiUrl();
+            const response = await axios.post(`${API_URL}/api/rsvp`, {
                 ...formData,
                 guestQuota,
                 guestCount: formData.attendanceStatus === 'Hadir' ? formData.guestCount : 1

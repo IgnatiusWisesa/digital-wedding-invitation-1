@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../config/api';
 
 interface Photo {
     _id: string;
@@ -13,7 +14,7 @@ export const LiveAlbum: React.FC = () => {
 
     const fetchPhotos = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const API_URL = getApiUrl();
             const res = await fetch(`${API_URL}/api/photos`);
             if (res.ok) {
                 const data = await res.json();
@@ -32,7 +33,7 @@ export const LiveAlbum: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const API_URL = getApiUrl();
 
     return (
         <div className="min-h-screen bg-gray-950 text-white p-8 overflow-x-hidden">

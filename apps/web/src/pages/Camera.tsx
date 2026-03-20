@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import imageCompression from 'browser-image-compression';
+import { getApiUrl } from '../config/api';
 
 const MAX_QUOTA = 5;
 
@@ -46,7 +47,7 @@ export const Camera: React.FC = () => {
 
             // Upload
             // We use the same backend URL pattern as RSVP/check-in. Assuming backend runs on 3001 or via Next proxy.
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const API_URL = getApiUrl();
             
             const response = await fetch(`${API_URL}/api/photos/upload`, {
                 method: 'POST',
