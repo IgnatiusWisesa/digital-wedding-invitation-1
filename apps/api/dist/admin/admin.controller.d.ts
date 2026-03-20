@@ -11,17 +11,36 @@ export declare class AdminController {
         username: string;
     }>;
     getGuests(page?: string, limit?: string, search?: string): Promise<{
-        guests: (import("mongoose").Document<unknown, {}, import("mongoose").Document<unknown, {}, import("../rsvp/schemas/rsvp.schema").Rsvp, {}, import("mongoose").DefaultSchemaOptions> & import("../rsvp/schemas/rsvp.schema").Rsvp & {
+        guests: {
+            ticketToken: string | null;
             _id: import("mongoose").Types.ObjectId;
-        } & {
+            $locals: Record<string, unknown>;
+            $op: "save" | "validate" | "remove" | null;
+            $where: Record<string, unknown>;
+            baseModelName?: string;
+            collection: import("mongoose").Collection;
+            db: import("mongoose").Connection;
+            errors?: import("mongoose").Error.ValidationError;
+            isNew: boolean;
+            schema: import("mongoose").Schema;
+            name: string;
+            normalizedName: string;
+            attendanceChoice: string;
+            note: string;
+            attendanceStatus: string;
+            ticketCode: string;
+            ticketIssuedAt: Date;
+            isCheckedIn: boolean;
+            checkInTime: Date;
+            qrCodeData: string;
+            checkedInAt: Date;
+            checkedInBy: string;
+            checkInMethod: string;
+            sentimentScore: number;
+            guestQuota: number;
+            guestCount: number;
             __v: number;
-        }, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").Document<unknown, {}, import("../rsvp/schemas/rsvp.schema").Rsvp, {}, import("mongoose").DefaultSchemaOptions> & import("../rsvp/schemas/rsvp.schema").Rsvp & {
-            _id: import("mongoose").Types.ObjectId;
-        } & {
-            __v: number;
-        } & Required<{
-            _id: import("mongoose").Types.ObjectId;
-        }>)[];
+        }[];
         pagination: {
             page: number;
             limit: number;

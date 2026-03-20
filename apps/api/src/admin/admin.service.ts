@@ -42,8 +42,25 @@ export class AdminService {
             this.rsvpModel.countDocuments(query).exec(),
         ]);
 
+        const guestsWithTokens = guests.map(guest => {
+            let ticketToken = null;
+            if (guest.ticketCode && guest.attendanceStatus === 'Hadir') {
+                ticketToken = this.jwtService.sign(
+                    { code: guest.ticketCode, name: guest.name },
+                    {
+                        secret: this.configService.get<string>('TICKET_SIGNING_SECRET') || 'secret',
+                        expiresIn: '90d'
+                    }
+                );
+            }
+            return {
+                ...guest.toObject(),
+                ticketToken
+            };
+        });
+
         return {
-            guests,
+            guests: guestsWithTokens,
             pagination: {
                 page,
                 limit,

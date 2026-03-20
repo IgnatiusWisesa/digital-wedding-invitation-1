@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import QRCode from 'react-qr-code';
+import { getApiUrl } from '../../config/api';
 
 interface Guest {
     _id: string;
@@ -14,6 +16,7 @@ interface Guest {
     isCheckedIn?: boolean;
     checkedInAt?: string;
     checkInMethod?: string;
+    ticketToken?: string;
     createdAt: string;
 }
 
@@ -49,7 +52,9 @@ export const AdminDashboard = () => {
     const [scanResult, setScanResult] = useState<string>('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showQrModal, setShowQrModal] = useState(false);
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+    const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
     const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', isCheckedIn: false });
     const username = localStorage.getItem('admin_username');
 
@@ -410,12 +415,25 @@ export const AdminDashboard = () => {
                                             )}
                                         </td>
                                         <td className="p-4">
-                                            <button
-                                                onClick={() => handleEditGuest(guest)}
-                                                className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 px-3 py-1 rounded text-sm transition-all"
-                                            >
-                                                ✏️ Edit
-                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleEditGuest(guest)}
+                                                    className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 px-3 py-1 rounded text-sm transition-all flex items-center gap-1"
+                                                >
+                                                    ✏️ Edit
+                                                </button>
+                                                {guest.ticketToken && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedQrGuest(guest);
+                                                            setShowQrModal(true);
+                                                        }}
+                                                        className="bg-accent-yellow/20 hover:bg-accent-yellow/40 text-accent-yellow px-3 py-1 rounded text-sm transition-all flex items-center gap-1"
+                                                    >
+                                                        📱 QR
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -596,6 +614,45 @@ export const AdminDashboard = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* QR View Modal */}
+            {showQrModal && selectedQrGuest && (
+                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+                    <div className="bg-night-800 border border-accent-yellow/30 rounded-lg p-8 max-w-sm w-full text-center">
+                        <h2 className="text-2xl font-serif text-accent-yellow mb-2">Guest Ticket</h2>
+                        <p className="text-white/60 mb-6">{selectedQrGuest.name}</p>
+                        
+                        <div className="bg-white p-4 inline-block rounded-lg shadow-xl mb-6">
+                            {selectedQrGuest.ticketToken ? (
+                                <QRCode 
+                                    value={selectedQrGuest.ticketToken}
+                                    size={200}
+                                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                                    viewBox={`0 0 256 256`}
+                                />
+                            ) : (
+                                <div className="w-[200px] h-[200px] flex items-center justify-center text-night text-sm italic">
+                                    No ticket token found
+                                </div>
+                            )}
+                        </div>
+                        
+                        <p className="text-white/40 text-sm mb-8">
+                            This QR code is used for check-in at the entrance.
+                        </p>
+                        
+                        <button
+                            onClick={() => {
+                                setShowQrModal(false);
+                                setSelectedQrGuest(null);
+                            }}
+                            className="w-full bg-accent-yellow hover:bg-accent-green text-night font-bold py-3 px-6 rounded-lg transition-all"
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}

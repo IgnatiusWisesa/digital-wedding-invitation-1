@@ -48,8 +48,21 @@ let AdminService = class AdminService {
             this.rsvpModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }).exec(),
             this.rsvpModel.countDocuments(query).exec(),
         ]);
+        const guestsWithTokens = guests.map(guest => {
+            let ticketToken = null;
+            if (guest.ticketCode && guest.attendanceStatus === 'Hadir') {
+                ticketToken = this.jwtService.sign({ code: guest.ticketCode, name: guest.name }, {
+                    secret: this.configService.get('TICKET_SIGNING_SECRET') || 'secret',
+                    expiresIn: '90d'
+                });
+            }
+            return {
+                ...guest.toObject(),
+                ticketToken
+            };
+        });
         return {
-            guests,
+            guests: guestsWithTokens,
             pagination: {
                 page,
                 limit,
