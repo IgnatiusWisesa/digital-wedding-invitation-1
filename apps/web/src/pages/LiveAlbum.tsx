@@ -3,6 +3,7 @@ import { getApiUrl } from '../config/api';
 
 interface Photo {
     _id: string;
+    url?: string;
     filename: string;
     guestId: string;
     createdAt: string;
@@ -58,7 +59,7 @@ export const LiveAlbum: React.FC = () => {
                             style={{ animationDelay: `${index * 50}ms` }}
                         >
                             <img 
-                                src={`${API_URL}/uploads/${p.filename}`} 
+                                src={p.url || `${API_URL}/uploads/${p.filename}`} 
                                 alt="Guest memory"
                                 className="w-full h-auto object-cover hover:scale-105 transition-transform duration-700"
                                 loading="lazy"

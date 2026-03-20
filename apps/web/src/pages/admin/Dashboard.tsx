@@ -722,7 +722,7 @@ export const AdminDashboard = () => {
                                     {photos.map((photo) => (
                                         <div key={photo._id} className="relative group aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10">
                                             <img 
-                                                src={`${getApiUrl()}/uploads/${photo.filename}`} 
+                                                src={photo.url || `${getApiUrl()}/uploads/${photo.filename}`} 
                                                 alt="Guest Memory"
                                                 className="w-full h-full object-cover"
                                             />

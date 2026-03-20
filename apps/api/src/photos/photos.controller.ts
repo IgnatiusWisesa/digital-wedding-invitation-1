@@ -38,9 +38,9 @@ export class PhotosController {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    const savedPhoto = await this.photosService.create(file.filename, guestId || 'anonymous');
+    const savedPhoto = await this.photosService.uploadToCloudinary(file.path, guestId || 'anonymous');
     return {
-      message: 'Photo uploaded successfully',
+      message: 'Photo uploaded to cloud successfully',
       photo: savedPhoto,
     };
   }

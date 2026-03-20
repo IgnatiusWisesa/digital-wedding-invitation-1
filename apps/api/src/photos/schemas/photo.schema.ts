@@ -6,6 +6,12 @@ export type PhotoDocument = Photo & Document;
 @Schema({ timestamps: true })
 export class Photo {
   @Prop({ required: true })
+  url: string;
+
+  @Prop({ required: true })
+  public_id: string;
+
+  @Prop()
   filename: string;
 
   @Prop()
