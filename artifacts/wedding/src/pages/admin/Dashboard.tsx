@@ -416,6 +416,7 @@ export const AdminDashboard = () => {
                     <table className="w-full">
                         <thead className="bg-accent-yellow/10 border-b border-accent-green/30">
                             <tr>
+                                <th className="text-left p-4 text-accent-yellow font-medium w-10">#</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Name</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Status</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Event</th>
@@ -437,8 +438,9 @@ export const AdminDashboard = () => {
                                     <td colSpan={5} className="text-center p-8 text-white/60">No guests found</td>
                                 </tr>
                             ) : (
-                                guests.map((guest) => (
-                                    <tr key={guest._id} className="border-b border-accent-green/10 hover:bg-accent-green/5">
+                                guests.map((guest, idx) => (
+                                    <tr key={guest._id} className={`border-b border-accent-green/10 transition-colors ${idx === 0 ? 'bg-accent-yellow/10 hover:bg-accent-yellow/15' : 'hover:bg-accent-green/5'}`}>
+                                        <td className="p-4 text-white/50 text-sm font-mono">{(page - 1) * 20 + idx + 1}</td>
                                         <td className="p-4 text-white">{guest.name}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded text-xs ${guest.attendanceStatus === 'Hadir'
@@ -680,13 +682,13 @@ export const AdminDashboard = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-white/80 mb-2 text-sm">Tamu (RSVP asli)</label>
+                                    <label className="block text-white/50 mb-2 text-sm">Tamu (RSVP asli)</label>
                                     <input
                                         type="number"
                                         min={1}
                                         value={formData.guestCount}
-                                        onChange={(e) => setFormData({ ...formData, guestCount: Math.max(1, parseInt(e.target.value) || 1) })}
-                                        className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-3 focus:outline-none focus:border-accent-yellow"
+                                        disabled
+                                        className="w-full bg-night/20 text-white/40 border border-white/10 rounded py-2 px-3 cursor-not-allowed"
                                     />
                                 </div>
                                 <div>
