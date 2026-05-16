@@ -1,5 +1,5 @@
 // Lights of Hope App - Romantic Lantern Festival
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Lanterns } from './components/Lanterns'
 import { Stars } from './components/Stars'
 import { RsvpForm } from './components/RsvpForm'
@@ -36,13 +36,52 @@ function App() {
         }
     }
 
+    const splashStars = useMemo(() => {
+        const seed = 42
+        const lcg = (s: number) => (s * 1664525 + 1013904223) & 0xffffffff
+        let s = seed
+        const rand = () => { s = lcg(s); return (s >>> 0) / 0xffffffff }
+        return Array.from({ length: 28 }, (_, i) => {
+            const angle = rand() * Math.PI * 2
+            const minR = 110, maxR = 210
+            const radius = minR + rand() * (maxR - minR)
+            const x = Math.cos(angle) * radius
+            const y = Math.sin(angle) * radius
+            const size = 1 + rand() * 2.5
+            const delay = rand() * 3
+            const duration = 1.5 + rand() * 2.5
+            const opacity = 0.4 + rand() * 0.6
+            const type = rand() > 0.5 ? '✦' : '·'
+            return { id: i, x, y, size, delay, duration, opacity, type }
+        })
+    }, [])
+
     return (
         <div className={`min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans selection:bg-orange-500 selection:text-white pb-20 ${showSplash ? 'h-screen overflow-hidden' : ''}`}>
             {showSplash && (
                 <div className="fixed inset-0 z-[100] bg-gradient-to-b from-gray-900 via-gray-950 to-black flex items-center justify-center">
                     <div className="text-center space-y-8 p-8 animate-fade-in-down">
-                        <div className="relative flex justify-center items-center mb-6">
+                        <div className="relative flex justify-center items-center mb-6 mx-auto" style={{ width: 240, height: 240, overflow: 'visible' }}>
                             <div className="absolute w-40 h-40 md:w-56 md:h-56 bg-accent-yellow/10 blur-[60px] rounded-full"></div>
+                            {splashStars.map(star => (
+                                <span
+                                    key={star.id}
+                                    style={{
+                                        position: 'absolute',
+                                        left: '50%',
+                                        top: '50%',
+                                        transform: `translate(calc(-50% + ${star.x}px), calc(-50% + ${star.y}px))`,
+                                        fontSize: `${star.size * 5}px`,
+                                        color: star.type === '✦' ? '#F5C842' : '#fff',
+                                        opacity: star.opacity,
+                                        animation: `twinkle ${star.duration}s ${star.delay}s ease-in-out infinite`,
+                                        pointerEvents: 'none',
+                                        lineHeight: 1,
+                                    }}
+                                >
+                                    {star.type}
+                                </span>
+                            ))}
                             <img
                                 src="/logo-new.png"
                                 alt="Logo"
