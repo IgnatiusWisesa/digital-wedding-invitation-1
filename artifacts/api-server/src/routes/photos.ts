@@ -110,9 +110,52 @@ router.post("/photos/:id/delete", async (req, res) => {
     await connectDB();
     const photo = await PhotoModel.findByIdAndDelete(req.params.id);
     if (!photo) return res.status(404).json({ error: "Photo not found" });
+    if (photo.public_id) {
+      try {
+        const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+        const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+        const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+        if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+          const { v2: cloudinary } = await import("cloudinary");
+          cloudinary.config({ cloud_name: CLOUDINARY_CLOUD_NAME, api_key: CLOUDINARY_API_KEY, api_secret: CLOUDINARY_API_SECRET });
+          await cloudinary.uploader.destroy(photo.public_id);
+        }
+      } catch { /* ignore cloudinary errors */ }
+    }
     return res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Delete photo error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /api/photos/bulk-delete — delete multiple photos by IDs
+router.post("/photos/bulk-delete", async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
+    const { ids } = req.body as { ids: string[] };
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: "ids array required" });
+    }
+    const photos = await PhotoModel.find({ _id: { $in: ids } });
+    const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+    const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+    const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+    if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET) {
+      const publicIds = photos.map(p => p.public_id).filter(Boolean) as string[];
+      if (publicIds.length > 0) {
+        try {
+          const { v2: cloudinary } = await import("cloudinary");
+          cloudinary.config({ cloud_name: CLOUDINARY_CLOUD_NAME, api_key: CLOUDINARY_API_KEY, api_secret: CLOUDINARY_API_SECRET });
+          await cloudinary.api.delete_resources(publicIds);
+        } catch { /* ignore */ }
+      }
+    }
+    const result = await PhotoModel.deleteMany({ _id: { $in: ids } });
+    return res.json({ success: true, deleted: result.deletedCount });
+  } catch (err) {
+    req.log.error({ err }, "Bulk delete photo error");
     return res.status(500).json({ error: "Internal server error" });
   }
 });

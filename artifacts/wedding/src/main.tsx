@@ -7,6 +7,7 @@ import { AdminDashboard } from './pages/admin/Dashboard'
 import { ChooseDashboard } from './pages/admin/ChooseDashboard'
 import { RegDashboard } from './pages/admin/RegDashboard'
 import { QRCodes } from './pages/admin/QRCodes'
+import { PhotoManager } from './pages/admin/PhotoManager'
 import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Camera } from './pages/Camera'
@@ -71,6 +72,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     element={
                         <ProtectedRoute>
                             <QRCodes />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/photos"
+                    element={
+                        <ProtectedRoute>
+                            <PhotoManager />
                         </ProtectedRoute>
                     }
                 />
