@@ -1,30 +1,59 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import mongoose, { Schema, model, models } from "mongoose";
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import { connectDB, getMongoUri } from "../lib/db";
-import { RsvpModel } from "./rsvp";
 
 const router = Router();
 
 const SHEET_ID = "15kDvVvnn9Hwy-E0TcnQIdZEfpBjpBvC7XVF3lY8EYNM";
-const TARGET_SHEET_GID = 768801319; // gid from the URL shared by user
-const INVITE_SECRET = process.env.TICKET_SIGNING_SECRET || "secret";
+const TARGET_SHEET_GID = 768801319;
 const MONGODB_URI = getMongoUri();
+
+// ── Invite model ──────────────────────────────────────────────
+interface IInvite {
+  code: string;
+  name: string;
+  quota: number;
+  event: string;
+  note: string;
+  sheetRow: number;
+  createdAt: Date;
+}
+
+const InviteSchema = new Schema<IInvite>({
+  code:      { type: String, required: true, unique: true, index: true },
+  name:      { type: String, required: true },
+  quota:     { type: Number, default: 1 },
+  event:     { type: String, default: "Resepsi" },
+  note:      { type: String, default: "" },
+  sheetRow:  { type: Number },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export const InviteModel =
+  (models.Invite as mongoose.Model<IInvite>) ||
+  model<IInvite>("Invite", InviteSchema);
+
+// ── Helpers ───────────────────────────────────────────────────
 
 function authMiddleware(req: any, res: any, next: any) {
   const JWT_SECRET = process.env.JWT_SECRET || "wedding-jwt-secret";
   const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   try {
     // @ts-ignore
     jwt.verify(authHeader.slice(7), JWT_SECRET);
     next();
   } catch {
-    return res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid token" });
   }
 }
 
-// Map Gereja/Resepsi abbreviations from sheet to canonical values
 function parseEvent(raw: string): string {
   if (!raw) return "Resepsi";
   const v = raw.trim().toUpperCase();
@@ -33,19 +62,11 @@ function parseEvent(raw: string): string {
   return "Resepsi";
 }
 
-// Generate a signed invite token containing guest info
-function makeInviteToken(payload: {
-  name: string;
-  quota: number;
-  event: string;
-  note: string;
-  row: number;
-}): string {
-  // @ts-ignore
-  return jwt.sign(payload, INVITE_SECRET, { expiresIn: "365d", algorithm: "HS256" });
+/** Generate a short URL-safe code, e.g. "a3b9k2mp" */
+function makeShortCode(): string {
+  return crypto.randomBytes(6).toString("base64url").slice(0, 8);
 }
 
-// Helper: find the tab name by sheetId (gid)
 async function findTabName(connectors: ReplitConnectors): Promise<string> {
   const metaResp = await connectors.proxy(
     "google-sheet",
@@ -55,27 +76,12 @@ async function findTabName(connectors: ReplitConnectors): Promise<string> {
   const sheets = meta.sheets || [];
   const target = sheets.find((s: any) => s.properties?.sheetId === TARGET_SHEET_GID);
   if (target) return target.properties.title as string;
-  // Fallback: return first sheet
   return sheets[0]?.properties?.title || "Sheet1";
 }
 
-// GET /api/admin/sheets/meta — return tab names (for debugging)
-router.get("/admin/sheets/meta", authMiddleware, async (req, res) => {
-  try {
-    const connectors = new ReplitConnectors();
-    const metaResp = await connectors.proxy(
-      "google-sheet",
-      `/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`
-    );
-    const meta = await metaResp.json() as any;
-    return res.json(meta);
-  } catch (err) {
-    req.log.error({ err }, "Sheets meta error");
-    return res.status(500).json({ error: "Failed to read sheet metadata" });
-  }
-});
+// ── Routes ────────────────────────────────────────────────────
 
-// GET /api/admin/sheets/preview — read rows without writing
+// GET /api/admin/sheets/preview
 router.get("/admin/sheets/preview", authMiddleware, async (req, res) => {
   try {
     const connectors = new ReplitConnectors();
@@ -86,7 +92,6 @@ router.get("/admin/sheets/preview", authMiddleware, async (req, res) => {
     );
     const data = await response.json() as any;
     const rows = (data.values || []) as string[][];
-    // Skip header row (row index 0)
     const guests = rows.slice(1).map((row, i) => ({
       rowIndex: i + 2,
       name: row[1] || "",
@@ -102,15 +107,15 @@ router.get("/admin/sheets/preview", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/admin/sheets/import — generate invite tokens and write links back to sheet
+// POST /api/admin/sheets/import
 router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
   try {
     const { baseUrl, overwrite = false } = req.body as { baseUrl: string; overwrite?: boolean };
     if (!baseUrl) return res.status(400).json({ error: "baseUrl is required" });
 
-    const connectors = new ReplitConnectors();
+    if (MONGODB_URI) await connectDB();
 
-    // 1. Read the sheet
+    const connectors = new ReplitConnectors();
     const tabName = await findTabName(connectors);
     const readResp = await connectors.proxy(
       "google-sheet",
@@ -119,34 +124,52 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
     const data = await readResp.json() as any;
     const rows = (data.values || []) as string[][];
 
-    // 2. Generate tokens and build write requests
     const batchData: { range: string; values: string[][] }[] = [];
-    const results: { name: string; url: string; row: number; skipped: boolean }[] = [];
+    const results: { name: string; url: string; row: number; skipped: boolean; quota: number; event: string }[] = [];
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       const name = (row[1] || "").trim();
       if (!name) continue;
 
-      const existingLink = row[5] || "";
+      const existingLink = (row[5] || "").trim();
+
+      // Skip if link already exists and not overwriting
       if (existingLink && !overwrite) {
-        results.push({ name, url: existingLink, row: i + 1, skipped: true });
+        const event = parseEvent(row[3] || "");
+        results.push({ name, url: existingLink, row: i + 1, skipped: true, quota: parseInt(row[2]) || 1, event });
         continue;
       }
 
       const quota = parseInt(row[2]) || 1;
       const event = parseEvent(row[3] || "");
       const note = row[4] || "";
+      const sheetRow = i + 1;
 
-      const token = makeInviteToken({ name, quota, event, note, row: i + 1 });
-      const url = `${baseUrl.replace(/\/$/, "")}/invite/${token}`;
+      // Reuse existing code if available (parse from existing URL), else generate new
+      let code: string;
+      if (existingLink && overwrite) {
+        const match = existingLink.match(/\/invite\/([a-zA-Z0-9_-]{6,12})$/);
+        code = match ? match[1] : makeShortCode();
+      } else {
+        code = makeShortCode();
+      }
 
-      // Column F = index 5, row is i+1 (1-based)
-      batchData.push({ range: `${tabName}!F${i + 1}`, values: [[url]] });
-      results.push({ name, url, row: i + 1, skipped: false });
+      // Save/update in MongoDB
+      if (MONGODB_URI) {
+        await InviteModel.findOneAndUpdate(
+          { code },
+          { code, name, quota, event, note, sheetRow },
+          { upsert: true, new: true }
+        );
+      }
+
+      const url = `${baseUrl.replace(/\/$/, "")}/invite/${code}`;
+      batchData.push({ range: `${tabName}!F${sheetRow}`, values: [[url]] });
+      results.push({ name, url, row: sheetRow, skipped: false, quota, event });
     }
 
-    // 3. Write all links back in a single batchUpdate
+    // Write all URLs to sheet in one batch call
     if (batchData.length > 0) {
       const writeResp = await connectors.proxy(
         "google-sheet",
@@ -154,30 +177,13 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            valueInputOption: "RAW",
-            data: batchData,
-          }),
+          body: JSON.stringify({ valueInputOption: "RAW", data: batchData }),
         }
       );
       const writeData = await writeResp.json() as any;
       if (writeData.error) {
         req.log.error({ writeData }, "Sheet write error");
         return res.status(500).json({ error: "Failed to write links to sheet", detail: writeData.error });
-      }
-    }
-
-    // 4. Optionally pre-create guest records in MongoDB (without overwriting existing RSVPs)
-    if (MONGODB_URI) {
-      await connectDB();
-      for (const r of results) {
-        if (r.skipped) continue;
-        const searchName = r.name.toLowerCase();
-        await RsvpModel.updateOne(
-          { normalizedName: searchName },
-          { $setOnInsert: { name: r.name, normalizedName: searchName, attendanceStatus: "pending", attendanceChoice: "Resepsi", guestQuota: 1, guestCount: 1, angpauOption: "tanpa", isCheckedIn: false, sentimentScore: 0 } },
-          { upsert: true }
-        );
       }
     }
 
@@ -194,19 +200,26 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/invite/:token — decode and return invite payload (public)
-router.get("/invite/:token", (req, res) => {
+// GET /api/invite/:code — public, looks up short code from MongoDB
+router.get("/invite/:code", async (req, res) => {
   try {
-    // @ts-ignore
-    const payload = jwt.verify(req.params.token, INVITE_SECRET) as any;
+    if (!MONGODB_URI) {
+      return res.status(503).json({ error: "Database not configured" });
+    }
+    await connectDB();
+    const invite = await InviteModel.findOne({ code: req.params.code }).lean();
+    if (!invite) {
+      return res.status(404).json({ error: "Undangan tidak ditemukan" });
+    }
     return res.json({
-      name: payload.name,
-      quota: payload.quota,
-      event: payload.event,
-      note: payload.note,
+      name: invite.name,
+      quota: invite.quota,
+      event: invite.event,
+      note: invite.note,
     });
-  } catch {
-    return res.status(400).json({ error: "Invalid or expired invite link" });
+  } catch (err) {
+    req.log.error({ err }, "Invite lookup error");
+    return res.status(500).json({ error: "Failed to load invite" });
   }
 });
 
