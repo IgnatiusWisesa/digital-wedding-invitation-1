@@ -53,6 +53,32 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.json({ total: 0, attending: 0, notAttending: 0, checkedIn: 0 });
     await connectDB();
 
+    const desk = req.query.desk as string | undefined;
+
+    if (desk) {
+      // Desk-specific stats: check-ins at this desk + global attending
+      const deskFilter = { checkInDesk: desk, isCheckedIn: true };
+      const [checkedIn, byEventAgg, totalAttending] = await Promise.all([
+        RsvpModel.countDocuments(deskFilter),
+        RsvpModel.aggregate([
+          { $match: deskFilter },
+          { $group: { _id: { $toLower: "$attendanceChoice" }, count: { $sum: 1 } } },
+        ]),
+        RsvpModel.countDocuments({ attendanceStatus: "Hadir" }),
+      ]);
+      const byEventMap: Record<string, number> = {};
+      for (const item of byEventAgg) byEventMap[item._id] = item.count;
+      return res.json({
+        checkedIn,
+        totalAttending,
+        byEvent: {
+          gereja: byEventMap["gereja"] || 0,
+          resepsi: byEventMap["resepsi"] || 0,
+          keduanya: byEventMap["keduanya"] || 0,
+        },
+      });
+    }
+
     const [total, attending, notAttending, checkedIn, guestCountAgg, byEvent] = await Promise.all([
       RsvpModel.countDocuments(),
       RsvpModel.countDocuments({ attendanceStatus: "Hadir" }),
