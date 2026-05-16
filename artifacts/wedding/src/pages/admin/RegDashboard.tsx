@@ -105,7 +105,7 @@ export const RegDashboard = () => {
         setLoading(true);
         try {
             const res = await axios.get(
-                `${getApiUrl()}/api/admin/guests?page=${page}&limit=20&search=${encodeURIComponent(search)}`,
+                `${getApiUrl()}/api/admin/guests?page=${page}&limit=20&desk=${deskId}&search=${encodeURIComponent(search)}`,
                 axiosConfig
             );
             setGuests(res.data.guests);
@@ -121,7 +121,7 @@ export const RegDashboard = () => {
         try {
             const res = await axios.get(`${getApiUrl()}/api/admin/guests`, {
                 ...axiosConfig,
-                params: { page: 1, limit: 1000 },
+                params: { page: 1, limit: 1000, desk: deskId },
             });
             const all: Guest[] = res.data.guests || [];
             if (all.length === 0) { alert('Tidak ada data tamu'); return; }
@@ -364,12 +364,7 @@ export const RegDashboard = () => {
                                         }`}
                                     >
                                         <td className="p-4 text-white/50 text-sm font-mono">{(page - 1) * 20 + idx + 1}</td>
-                                        <td className="p-4 text-white">
-                                            {guest.name}
-                                            {guest.checkInDesk === deskId && (
-                                                <span className="ml-2 text-xs text-accent-yellow/60">● meja ini</span>
-                                            )}
-                                        </td>
+                                        <td className="p-4 text-white">{guest.name}</td>
                                         <td className="p-4">
                                             <span className={`px-2 py-1 rounded text-xs ${guest.attendanceStatus === 'Hadir' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
                                                 {guest.attendanceStatus}
