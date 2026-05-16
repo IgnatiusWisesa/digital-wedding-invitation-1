@@ -62,14 +62,18 @@ export const weddingConfig = {
     gift: {
         accounts: [
             {
-                bankName: import.meta.env.VITE_BANK_1_NAME || 'Bank Central Asia (BCA)',
-                accountName: import.meta.env.VITE_ACCOUNT_1_NAME || 'Romeo & Juliet',
-                accountNumber: import.meta.env.VITE_ACCOUNT_1_NUMBER || '1234567890',
+                bankName:      import.meta.env.VITE_BANK_1_NAME         || 'Commonwealth Bank',
+                flag:          import.meta.env.VITE_BANK_1_FLAG         || '🇦🇺',
+                accountName:   import.meta.env.VITE_ACCOUNT_1_NAME      || 'Ignatius Wisesa',
+                accountNumber: import.meta.env.VITE_ACCOUNT_1_NUMBER    || '10983987',
+                bsb:           import.meta.env.VITE_ACCOUNT_1_BSB       || '0621-188',
             },
             {
-                bankName: import.meta.env.VITE_BANK_2_NAME || 'Bank Central Asia (BCA)',
-                accountName: import.meta.env.VITE_ACCOUNT_2_NAME || 'Romeo & Juliet',
-                accountNumber: import.meta.env.VITE_ACCOUNT_2_NUMBER || '0987654321',
+                bankName:      import.meta.env.VITE_BANK_2_NAME         || 'Bank Central Asia (BCA)',
+                flag:          import.meta.env.VITE_BANK_2_FLAG         || '🇮🇩',
+                accountName:   import.meta.env.VITE_ACCOUNT_2_NAME      || 'Nirani Waruwu',
+                accountNumber: import.meta.env.VITE_ACCOUNT_2_NUMBER    || '0083510801',
+                bsb:           import.meta.env.VITE_ACCOUNT_2_BSB       || '',
             },
         ],
     },

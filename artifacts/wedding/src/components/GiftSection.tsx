@@ -3,9 +3,9 @@ import { Section } from './Section';
 import { weddingConfig } from '../config/wedding';
 
 export const GiftSection = () => {
-    const copyToClipboard = (accountNumber: string) => {
-        navigator.clipboard.writeText(accountNumber);
-        alert("Account number copied!");
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        alert("Copied to clipboard!");
     };
 
     return (
@@ -19,11 +19,26 @@ export const GiftSection = () => {
                 {weddingConfig.gift.accounts?.length > 0 && weddingConfig.gift.accounts.map((account, index) => (
                     <div key={index} className="bg-night-800/50 p-8 rounded-xl border border-accent-green/30 hover:border-accent-green/60 transition-colors group">
                         <div className="mb-6">
-                            <div className="text-left">
-                                <h3 className="font-bold text-2xl text-accent-yellow">{account.bankName.split(' ')[0]}</h3>
-                                <p className="text-white/60 text-sm">{account.bankName}</p>
+                            <div className="text-left flex items-start gap-3">
+                                <span className="text-3xl leading-none mt-0.5">{account.flag}</span>
+                                <div>
+                                    <h3 className="font-bold text-2xl text-accent-yellow leading-tight">{account.bankName.split(' ')[0]}</h3>
+                                    <p className="text-white/60 text-sm">{account.bankName}</p>
+                                </div>
                             </div>
                         </div>
+
+                        {account.bsb && (
+                            <div className="text-left mb-4">
+                                <p className="text-white/50 text-xs uppercase tracking-widest mb-1">BSB</p>
+                                <div className="flex items-center space-x-3">
+                                    <span className="font-mono text-xl text-white tracking-wider">{account.bsb}</span>
+                                    <button onClick={() => copyToClipboard(account.bsb!)} className="text-accent-yellow hover:text-accent-green focus:outline-none" title="Copy BSB">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="text-left mb-8">
                             <p className="text-white/50 text-xs uppercase tracking-widest mb-1">Account Number</p>
