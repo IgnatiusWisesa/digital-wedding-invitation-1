@@ -31,7 +31,7 @@ export const Events = () => {
                 {showGereja && (
                     <div className="bg-gradient-to-br from-night-800/50 to-night-900/50 p-8 rounded-xl border border-accent-green/30 hover:border-accent-green/60 transition-all duration-300 hover:shadow-[0_0_30px_rgba(74,222,128,0.2)] group relative overflow-hidden">
                         <h3 className="font-serif text-2xl text-white mb-4 flex items-center justify-center gap-2">
-                            <span>⛪</span> {weddingConfig.ceremony.label || 'Holy Matrimony'}
+                            <span>⛪</span> {weddingConfig.ceremony.name}
                         </h3>
                         <div className="text-white/80 space-y-2 mb-6 font-light">
                             <p className="text-lg font-semibold text-white">{weddingConfig.ceremony.time}</p>

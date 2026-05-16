@@ -23,7 +23,8 @@ export const weddingConfig = {
     },
 
     ceremony: {
-        label: import.meta.env.VITE_CEREMONY_LABEL || 'Holy Matrimony',
+        label: import.meta.env.VITE_CEREMONY_LABEL || 'Gereja',
+        name:  import.meta.env.VITE_CEREMONY_NAME  || 'Holy Matrimony',
         time: import.meta.env.VITE_CEREMONY_TIME || '09:00 AM - 11:00 AM',
         venue: import.meta.env.VITE_CEREMONY_VENUE || "St. Peter's Cathedral",
         address: import.meta.env.VITE_CEREMONY_ADDRESS || 'Jl. Katedral No.7, Jakarta Pusat',
