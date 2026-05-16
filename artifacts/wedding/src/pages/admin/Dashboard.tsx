@@ -334,6 +334,21 @@ export const AdminDashboard = () => {
         }
     };
 
+    const handleSyncQuota = async () => {
+        if (!window.confirm('Sinkron jumlah tamu dari spreadsheet ke semua data pending?\n(Data yang sudah RSVP "Hadir"/"Tidak" tidak akan terpengaruh)')) return;
+        setImportLoading(true);
+        try {
+            const API_URL = getApiUrl();
+            const res = await axios.post(`${API_URL}/api/admin/sheets/sync-quota`, {}, axiosConfig);
+            alert(`✅ Berhasil sinkron ${res.data.updated} data tamu.`);
+            fetchGuests();
+        } catch (err: any) {
+            alert('Gagal: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_username');
@@ -434,6 +449,14 @@ export const AdminDashboard = () => {
                         className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50"
                     >
                         {importLoading ? '⏳ Loading...' : '📋 Import Spreadsheet'}
+                    </button>
+                    <button
+                        onClick={handleSyncQuota}
+                        disabled={importLoading}
+                        className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50"
+                        title="Sinkron jumlah tamu dari spreadsheet ke data RSVP pending"
+                    >
+                        🔄 Sinkron Kuota
                     </button>
                     <button
                         onClick={handleExport}

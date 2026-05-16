@@ -162,6 +162,13 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
           { code, name, quota, event, note, sheetRow },
           { upsert: true, new: true }
         );
+
+        // Sync guestCount into any existing pending RsvpModel record for this guest
+        const { RsvpModel } = await import("./rsvp");
+        await RsvpModel.updateMany(
+          { normalizedName: name.trim().toLowerCase(), attendanceStatus: { $nin: ["Hadir", "Tidak"] } },
+          { $set: { guestCount: quota, guestQuota: quota } }
+        );
       }
 
       const url = `${baseUrl.replace(/\/$/, "")}/invite/${code}`;
@@ -197,6 +204,29 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Sheets import error");
     return res.status(500).json({ error: "Import failed" });
+  }
+});
+
+// POST /api/admin/sheets/sync-quota — bulk sync guestCount from InviteModel → RsvpModel pending records
+router.post("/admin/sheets/sync-quota", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
+    const { RsvpModel } = await import("./rsvp");
+
+    const invites = await InviteModel.find({});
+    let updated = 0;
+    for (const invite of invites) {
+      const result = await RsvpModel.updateMany(
+        { normalizedName: invite.name.trim().toLowerCase(), attendanceStatus: { $nin: ["Hadir", "Tidak"] } },
+        { $set: { guestCount: invite.quota, guestQuota: invite.quota } }
+      );
+      updated += result.modifiedCount;
+    }
+    return res.json({ success: true, updated });
+  } catch (err) {
+    req.log.error({ err }, "Sync quota error");
+    return res.status(500).json({ error: "Sync failed" });
   }
 });
 
