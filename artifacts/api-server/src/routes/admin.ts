@@ -103,21 +103,29 @@ router.get("/admin/guests/export", authMiddleware, async (req, res) => {
       { header: "Name", key: "name", width: 30 },
       { header: "Attendance Status", key: "attendanceStatus", width: 20 },
       { header: "Attendance Choice", key: "attendanceChoice", width: 20 },
-      { header: "Note", key: "note", width: 40 },
-      { header: "Guest Count", key: "guestCount", width: 15 },
+      { header: "Wishes", key: "note", width: 40 },
+      { header: "Admin Notes", key: "adminNote", width: 40 },
+      { header: "Guest Count (RSVP)", key: "guestCount", width: 18 },
+      { header: "Guest Count (Real)", key: "guestCountReal", width: 18 },
+      { header: "Angpau", key: "angpauOption", width: 15 },
+      { header: "Sticker #", key: "stickerNumber", width: 12 },
       { header: "Checked In", key: "isCheckedIn", width: 15 },
       { header: "Check-in Time", key: "checkedInAt", width: 20 },
       { header: "Created At", key: "createdAt", width: 20 },
     ];
 
-    const guests = await RsvpModel.find().sort({ createdAt: -1 });
+    const guests = await RsvpModel.find().sort({ checkedInAt: -1, createdAt: -1 });
     for (const g of guests) {
       sheet.addRow({
         name: g.name,
         attendanceStatus: g.attendanceStatus,
         attendanceChoice: g.attendanceChoice,
         note: g.note || "",
+        adminNote: (g as any).adminNote || "",
         guestCount: g.guestCount,
+        guestCountReal: (g as any).guestCountReal ?? "",
+        angpauOption: g.angpauOption || "tanpa",
+        stickerNumber: g.stickerNumber ?? "",
         isCheckedIn: g.isCheckedIn ? "Yes" : "No",
         checkedInAt: g.checkedInAt ? new Date(g.checkedInAt).toLocaleString() : "",
         createdAt: g.createdAt ? new Date(g.createdAt).toLocaleString() : "",
@@ -151,7 +159,7 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
     }
 
     const [guests, total] = await Promise.all([
-      RsvpModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      RsvpModel.find(query).skip(skip).limit(limit).sort({ checkedInAt: -1, createdAt: -1 }),
       RsvpModel.countDocuments(query),
     ]);
 
@@ -183,7 +191,7 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
     await connectDB();
 
-    const { name, attendanceStatus, attendanceChoice, note, guestCount = 1, angpauOption = "tanpa" } = req.body;
+    const { name, attendanceStatus, attendanceChoice, note, adminNote, guestCount = 1, guestCountReal, angpauOption = "tanpa" } = req.body;
     const normalizedName = name.trim().replace(/\s+/g, " ");
     const searchName = normalizedName.toLowerCase();
 
@@ -203,7 +211,9 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
       attendanceChoice,
       attendanceStatus,
       note,
+      adminNote,
       guestCount: Math.max(1, parseInt(guestCount) || 1),
+      ...(guestCountReal !== undefined ? { guestCountReal: Math.max(1, parseInt(guestCountReal) || 1) } : {}),
       angpauOption,
       ...(stickerNumber !== undefined ? { stickerNumber } : {}),
       ticketCode: attendanceStatus === "Hadir" ? ticketCode : undefined,
@@ -226,7 +236,7 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
 
     const { id } = req.params;
-    const { attendanceStatus, attendanceChoice, isCheckedIn, note, guestCount, angpauOption } = req.body;
+    const { attendanceStatus, attendanceChoice, isCheckedIn, note, adminNote, guestCount, guestCountReal, angpauOption } = req.body;
     const user = (req as any).user;
 
     await connectDB();
@@ -243,7 +253,9 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     }
     if (attendanceChoice !== undefined) guest.attendanceChoice = attendanceChoice;
     if (note !== undefined) guest.note = note;
+    if (adminNote !== undefined) (guest as any).adminNote = adminNote;
     if (guestCount !== undefined) guest.guestCount = Math.max(1, parseInt(guestCount) || 1);
+    if (guestCountReal !== undefined) (guest as any).guestCountReal = guestCountReal === null ? undefined : Math.max(1, parseInt(guestCountReal) || 1);
     if (angpauOption !== undefined) {
       const prevOption = guest.angpauOption;
       guest.angpauOption = angpauOption;

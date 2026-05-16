@@ -14,6 +14,7 @@ interface IRsvp extends Document {
   normalizedName: string;
   attendanceChoice: string;
   note?: string;
+  adminNote?: string;
   attendanceStatus: string;
   ticketCode?: string;
   ticketIssuedAt?: Date;
@@ -26,6 +27,7 @@ interface IRsvp extends Document {
   sentimentScore: number;
   guestQuota: number;
   guestCount: number;
+  guestCountReal?: number;
   angpauOption?: string;
   stickerNumber?: number;
   createdAt?: Date;
@@ -37,6 +39,7 @@ const RsvpSchema = new Schema<IRsvp>(
     normalizedName: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
     attendanceChoice: { type: String, required: true },
     note: { type: String },
+    adminNote: { type: String },
     attendanceStatus: { type: String, required: true },
     ticketCode: { type: String, unique: true, sparse: true },
     ticketIssuedAt: { type: Date },
@@ -49,6 +52,7 @@ const RsvpSchema = new Schema<IRsvp>(
     sentimentScore: { type: Number, default: 0 },
     guestQuota: { type: Number, default: 1 },
     guestCount: { type: Number, default: 1 },
+    guestCountReal: { type: Number },
     angpauOption: { type: String, enum: ["tanpa", "transfer", "kado"], default: "tanpa" },
     stickerNumber: { type: Number, sparse: true },
   },
@@ -84,14 +88,6 @@ router.post("/rsvp", async (req, res) => {
 
     const actualGuestCount = attendanceStatus === "Hadir" ? Math.min(guestCount, guestQuota) : 1;
 
-    const { angpauOption = "tanpa" } = req.body;
-
-    let stickerNumber: number | undefined;
-    if (angpauOption === "kado") {
-      const lastSticker = await RsvpModel.findOne({ stickerNumber: { $exists: true } }).sort({ stickerNumber: -1 }).select("stickerNumber");
-      stickerNumber = (lastSticker?.stickerNumber ?? 0) + 1;
-    }
-
     const updated = await RsvpModel.findOneAndUpdate(
       { normalizedName: searchName },
       {
@@ -105,8 +101,7 @@ router.post("/rsvp", async (req, res) => {
         sentimentScore: 0,
         guestQuota,
         guestCount: actualGuestCount,
-        angpauOption,
-        ...(stickerNumber !== undefined ? { stickerNumber } : {}),
+        angpauOption: "tanpa",
       },
       { new: true, upsert: true }
     );

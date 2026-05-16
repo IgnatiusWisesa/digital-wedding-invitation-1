@@ -13,7 +13,9 @@ interface Guest {
     attendanceStatus: string;
     attendanceChoice: string;
     note: string;
+    adminNote?: string;
     guestCount?: number;
+    guestCountReal?: number;
     angpauOption?: string;
     stickerNumber?: number;
     isCheckedIn?: boolean;
@@ -60,7 +62,7 @@ export const AdminDashboard = () => {
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
     const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
     const [photos, setPhotos] = useState<any[]>([]);
-    const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', guestCount: 1, angpauOption: 'tanpa', isCheckedIn: false });
+    const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined as number | undefined, angpauOption: 'tanpa', isCheckedIn: false });
     const username = localStorage.getItem('admin_username');
 
     const token = localStorage.getItem('admin_token');
@@ -222,7 +224,7 @@ export const AdminDashboard = () => {
             if (response.data.success) {
                 alert(`Guest added successfully! ${response.data.guest.ticketToken ? 'Ticket generated.' : ''}`);
                 setShowAddModal(false);
-                setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', isCheckedIn: false });
+                setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
                 fetchGuests();
                 fetchStats();
             }
@@ -238,7 +240,9 @@ export const AdminDashboard = () => {
             attendanceStatus: guest.attendanceStatus,
             attendanceChoice: guest.attendanceChoice,
             note: guest.note || '',
+            adminNote: guest.adminNote || '',
             guestCount: guest.guestCount || 1,
+            guestCountReal: guest.guestCountReal,
             angpauOption: guest.angpauOption || 'tanpa',
             isCheckedIn: guest.isCheckedIn || false
         });
@@ -253,7 +257,9 @@ export const AdminDashboard = () => {
                 attendanceStatus: formData.attendanceStatus,
                 attendanceChoice: formData.attendanceChoice,
                 note: formData.note,
+                adminNote: formData.adminNote,
                 guestCount: formData.guestCount,
+                guestCountReal: formData.guestCountReal ?? null,
                 angpauOption: formData.angpauOption,
                 isCheckedIn: formData.isCheckedIn
             }, axiosConfig);
@@ -413,11 +419,12 @@ export const AdminDashboard = () => {
                                 <th className="text-left p-4 text-accent-yellow font-medium">Name</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Status</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Event</th>
-                                <th className="text-left p-4 text-accent-yellow font-medium">Guests</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Tamu</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Angpau</th>
-                                <th className="text-left p-4 text-accent-yellow font-medium">Note</th>
-                                <th className="text-left p-4 text-accent-yellow font-medium">Checked In</th>
-                                <th className="text-left p-4 text-accent-yellow font-medium">Actions</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Wishes</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Catatan Admin</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Check-in</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -444,7 +451,10 @@ export const AdminDashboard = () => {
                                         <td className="p-4 text-white/80">{guest.attendanceChoice}</td>
                                         <td className="p-4">
                                             <span className="px-2 py-1 rounded text-xs bg-purple-500/20 text-purple-300">
-                                                {(guest as any).guestCount || 1} 👥
+                                                {guest.guestCountReal !== undefined
+                                                    ? <><span className="line-through opacity-50">{guest.guestCount || 1}</span> → {guest.guestCountReal}</>
+                                                    : <>{guest.guestCount || 1}</>
+                                                } 👥
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -458,7 +468,8 @@ export const AdminDashboard = () => {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="p-4 text-white/60 text-sm max-w-xs truncate">{guest.note || '-'}</td>
+                                        <td className="p-4 text-white/60 text-sm max-w-xs truncate">{guest.note || '–'}</td>
+                                        <td className="p-4 text-white/60 text-sm max-w-xs truncate">{guest.adminNote || '–'}</td>
                                         <td className="p-4">
                                             {guest.checkedInAt ? (
                                                 <div className="text-sm">
@@ -588,12 +599,21 @@ export const AdminDashboard = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">Note (Optional)</label>
+                                <label className="block text-white/80 mb-2">Wishes (dari tamu, optional)</label>
                                 <textarea
                                     value={formData.note}
                                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow h-24"
-                                    placeholder="Additional notes..."
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow h-20"
+                                    placeholder="Pesan/wishes dari tamu..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">Catatan Admin (optional)</label>
+                                <textarea
+                                    value={formData.adminNote}
+                                    onChange={(e) => setFormData({ ...formData, adminNote: e.target.value })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow h-20"
+                                    placeholder="Catatan internal admin..."
                                 />
                             </div>
                             <div>
@@ -604,7 +624,7 @@ export const AdminDashboard = () => {
                                         onChange={(e) => setFormData({ ...formData, isCheckedIn: e.target.checked })}
                                         className="w-4 h-4 rounded border-accent-green/50 bg-night/50 text-accent-yellow focus:ring-accent-yellow"
                                     />
-                                    <span>Check-in guest immediately</span>
+                                    <span>Langsung check-in</span>
                                 </label>
                             </div>
                             <div className="flex gap-3 mt-6">
@@ -617,7 +637,7 @@ export const AdminDashboard = () => {
                                 <button
                                     onClick={() => {
                                         setShowAddModal(false);
-                                        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', guestCount: 1, angpauOption: 'tanpa', isCheckedIn: false });
+                                        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
                                     }}
                                     className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-4 rounded transition-all"
                                 >
@@ -658,15 +678,28 @@ export const AdminDashboard = () => {
                                     <option value="Keduanya">Keduanya</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-white/80 mb-2">Number of Guests</label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    value={formData.guestCount}
-                                    onChange={(e) => setFormData({ ...formData, guestCount: Math.max(1, parseInt(e.target.value) || 1) })}
-                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
-                                />
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-white/80 mb-2 text-sm">Tamu (RSVP asli)</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={formData.guestCount}
+                                        onChange={(e) => setFormData({ ...formData, guestCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                                        className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-3 focus:outline-none focus:border-accent-yellow"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-white/80 mb-2 text-sm">Tamu real (hari H)</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={formData.guestCountReal ?? ''}
+                                        onChange={(e) => setFormData({ ...formData, guestCountReal: e.target.value === '' ? undefined : Math.max(1, parseInt(e.target.value) || 1) })}
+                                        className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-3 focus:outline-none focus:border-accent-yellow"
+                                        placeholder="–"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">Angpau / Gift</label>
@@ -687,12 +720,18 @@ export const AdminDashboard = () => {
                                 )}
                             </div>
                             <div>
-                                <label className="block text-white/80 mb-2">Note</label>
+                                <label className="block text-white/60 mb-1 text-sm">Wishes (dari tamu)</label>
+                                <div className="w-full bg-night/30 text-white/70 border border-white/10 rounded py-2 px-4 text-sm min-h-[3rem] italic">
+                                    {formData.note || <span className="text-white/30">– (tidak ada wishes) –</span>}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">Catatan Admin</label>
                                 <textarea
-                                    value={formData.note}
-                                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow h-24"
-                                    placeholder="Additional notes..."
+                                    value={formData.adminNote}
+                                    onChange={(e) => setFormData({ ...formData, adminNote: e.target.value })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow h-20"
+                                    placeholder="Catatan internal admin..."
                                 />
                             </div>
                             <div>
