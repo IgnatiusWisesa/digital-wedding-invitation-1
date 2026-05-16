@@ -242,7 +242,7 @@ export const AdminDashboard = () => {
             note: guest.note || '',
             adminNote: guest.adminNote || '',
             guestCount: guest.guestCount || 1,
-            guestCountReal: guest.guestCountReal,
+            guestCountReal: guest.guestCountReal ?? guest.guestCount ?? 1,
             angpauOption: guest.angpauOption || 'tanpa',
             isCheckedIn: guest.isCheckedIn || false
         });
