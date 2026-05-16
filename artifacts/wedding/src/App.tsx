@@ -46,7 +46,7 @@ function App() {
                             <img
                                 src="/logo-new.png"
                                 alt="Logo"
-                                className="relative z-10 w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-[0_0_16px_rgba(255,200,80,0.35)]"
+                                className="relative z-10 w-48 h-48 md:w-60 md:h-60 object-contain drop-shadow-[0_0_16px_rgba(255,200,80,0.35)]"
                             />
                         </div>
                         <div className="mb-8">
