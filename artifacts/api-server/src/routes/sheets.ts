@@ -163,11 +163,13 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
           { upsert: true, new: true }
         );
 
-        // Sync guestCount into any existing pending RsvpModel record for this guest
+        // Sync guestCount + note into any existing RsvpModel records for this guest
         const { RsvpModel } = await import("./rsvp");
+        const updateFields: Record<string, unknown> = { guestCount: quota, guestQuota: quota };
+        if (note) updateFields.adminNote = note;
         await RsvpModel.updateMany(
-          { normalizedName: name.trim().toLowerCase(), attendanceStatus: { $nin: ["Hadir", "Tidak"] } },
-          { $set: { guestCount: quota, guestQuota: quota } }
+          { normalizedName: name.trim().toLowerCase() },
+          { $set: updateFields }
         );
       }
 
@@ -217,9 +219,11 @@ router.post("/admin/sheets/sync-quota", authMiddleware, async (req, res) => {
     const invites = await InviteModel.find({});
     let updated = 0;
     for (const invite of invites) {
+      const updateFields: Record<string, unknown> = { guestCount: invite.quota, guestQuota: invite.quota };
+      if (invite.note) updateFields.adminNote = invite.note;
       const result = await RsvpModel.updateMany(
-        { normalizedName: invite.name.trim().toLowerCase(), attendanceStatus: { $nin: ["Hadir", "Tidak"] } },
-        { $set: { guestCount: invite.quota, guestQuota: invite.quota } }
+        { normalizedName: invite.name.trim().toLowerCase() },
+        { $set: updateFields }
       );
       updated += result.modifiedCount;
     }
