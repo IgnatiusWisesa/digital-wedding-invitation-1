@@ -2,25 +2,12 @@ import { Router } from "express";
 import mongoose, { Schema, Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
-import { logger } from "../lib/logger";
+import { connectDB, getMongoUri } from "../lib/db";
 
 const router = Router();
 
 const TICKET_SECRET = process.env.TICKET_SIGNING_SECRET || "secret";
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "";
-
-let isConnected = false;
-
-async function connectDB() {
-  if (isConnected || !MONGODB_URI) return;
-  try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-  } catch (e) {
-    logger.error({ e }, "MongoDB connection error");
-  }
-}
-connectDB();
+const MONGODB_URI = getMongoUri();
 
 interface IRsvp extends Document {
   name: string;

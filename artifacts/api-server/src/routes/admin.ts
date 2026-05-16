@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { RsvpModel } from "./rsvp";
 import { logger } from "../lib/logger";
+import { connectDB, getMongoUri } from "../lib/db";
 
 const router = Router();
 
@@ -9,7 +10,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "wedding-jwt-secret";
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 const TICKET_SECRET = process.env.TICKET_SIGNING_SECRET || "secret";
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "";
+const MONGODB_URI = getMongoUri();
 
 function signAdminToken(username: string): string {
   // @ts-ignore
@@ -49,6 +50,7 @@ router.post("/admin/login", async (req, res) => {
 router.get("/admin/stats", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.json({ total: 0, attending: 0, notAttending: 0, checkedIn: 0 });
+    await connectDB();
 
     const [total, attending, notAttending, checkedIn, guestCountAgg, byEvent] = await Promise.all([
       RsvpModel.countDocuments(),
@@ -61,7 +63,7 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
       ]),
       RsvpModel.aggregate([
         { $match: { attendanceStatus: "Hadir" } },
-        { $group: { _id: { $toLower: "$attendanceChoice" }, count: { $sum: 1 } } },
+        { $group: { _id: { $toLower: "$attendanceChoice" }, count: { $sum: { $ifNull: ["$guestCount", 1] } } } },
       ]),
     ]);
 
@@ -92,6 +94,7 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
 router.get("/admin/guests/export", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
 
     const ExcelJS = await import("exceljs");
     const workbook = new ExcelJS.default.Workbook();
@@ -135,6 +138,7 @@ router.get("/admin/guests/export", authMiddleware, async (req, res) => {
 router.get("/admin/guests", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.json({ guests: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, total: 0, page: 1, totalPages: 0 });
+    await connectDB();
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -177,6 +181,7 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
 router.post("/admin/guests", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
 
     const { name, attendanceStatus, attendanceChoice, note } = req.body;
     const normalizedName = name.trim().replace(/\s+/g, " ");

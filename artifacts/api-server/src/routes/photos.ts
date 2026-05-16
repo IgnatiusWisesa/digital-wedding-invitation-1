@@ -2,9 +2,10 @@ import { Router } from "express";
 import multer from "multer";
 import mongoose, { Schema, Document } from "mongoose";
 import { logger } from "../lib/logger";
+import { connectDB, getMongoUri } from "../lib/db";
 
 const router = Router();
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "";
+const MONGODB_URI = getMongoUri();
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -31,6 +32,7 @@ export const PhotoModel = mongoose.models.Photo || mongoose.model<IPhoto>("Photo
 router.get("/photos", async (req, res) => {
   try {
     if (!MONGODB_URI) return res.json([]);
+    await connectDB();
     const photos = await PhotoModel.find().sort({ createdAt: -1 });
     return res.json(photos);
   } catch (err) {
@@ -42,6 +44,7 @@ router.get("/photos", async (req, res) => {
 router.post("/photos/upload", upload.single("file"), async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
 
     const guestId = req.body?.guestId || "anonymous";
 
@@ -104,6 +107,7 @@ router.post("/photos/upload", upload.single("file"), async (req, res) => {
 router.post("/photos/:id/delete", async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
     const photo = await PhotoModel.findByIdAndDelete(req.params.id);
     if (!photo) return res.status(404).json({ error: "Photo not found" });
     return res.json({ success: true });
