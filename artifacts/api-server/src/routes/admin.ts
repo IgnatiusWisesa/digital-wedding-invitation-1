@@ -134,7 +134,7 @@ router.get("/admin/guests/export", authMiddleware, async (req, res) => {
 
 router.get("/admin/guests", authMiddleware, async (req, res) => {
   try {
-    if (!MONGODB_URI) return res.json({ guests: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+    if (!MONGODB_URI) return res.json({ guests: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }, total: 0, page: 1, totalPages: 0 });
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -161,9 +161,12 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
 
     return res.json({
       guests: guestsWithTokens,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (err) {
     req.log.error({ err }, "Get guests error");
