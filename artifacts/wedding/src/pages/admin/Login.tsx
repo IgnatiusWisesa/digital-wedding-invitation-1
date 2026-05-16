@@ -15,7 +15,7 @@ export const AdminLogin = () => {
     useEffect(() => {
         if (loginSuccess) {
             console.log('useEffect: loginSuccess is true, redirecting to dashboard...');
-            window.location.replace('/admin/dashboard');
+            window.location.replace('/admin/choose');
         }
     }, [loginSuccess]);
 

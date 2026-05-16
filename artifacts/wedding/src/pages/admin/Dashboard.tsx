@@ -346,7 +346,10 @@ export const AdminDashboard = () => {
             <div className="max-w-7xl mx-auto mb-8">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h1 className="text-3xl font-serif text-accent-yellow mb-2">Admin Dashboard</h1>
+                        <button onClick={() => navigate('/admin/choose')} className="text-white/40 hover:text-white/70 text-sm mb-2 flex items-center gap-1 transition-colors">
+                            ← Pilih Dashboard
+                        </button>
+                        <h1 className="text-3xl font-serif text-accent-yellow mb-2">Master Dashboard</h1>
                         <p className="text-white/60">Welcome, {username}</p>
                     </div>
                     <button

@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import { AdminLogin } from './pages/admin/Login'
 import { AdminDashboard } from './pages/admin/Dashboard'
+import { ChooseDashboard } from './pages/admin/ChooseDashboard'
+import { RegDashboard } from './pages/admin/RegDashboard'
 import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Camera } from './pages/Camera'
@@ -40,10 +42,26 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/live-album" element={<LiveAlbum />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route
+                    path="/admin/choose"
+                    element={
+                        <ProtectedRoute>
+                            <ChooseDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
                     path="/admin/dashboard"
                     element={
                         <ProtectedRoute>
                             <AdminDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/reg/:desk"
+                    element={
+                        <ProtectedRoute>
+                            <RegDashboard />
                         </ProtectedRoute>
                     }
                 />

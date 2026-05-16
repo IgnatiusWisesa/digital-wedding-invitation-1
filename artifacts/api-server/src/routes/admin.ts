@@ -154,9 +154,15 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
     const search = req.query.search as string;
     const skip = (page - 1) * limit;
 
+    const desk = req.query.desk as string | undefined;
+
     const query: Record<string, unknown> = {};
     if (search) {
       query.name = { $regex: search, $options: "i" };
+    }
+    if (desk) {
+      query.checkInDesk = desk;
+      query.isCheckedIn = true;
     }
 
     const [guests, total] = await Promise.all([
@@ -292,7 +298,7 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
 
-    const { qrData } = req.body;
+    const { qrData, desk = "master", guestCountReal, angpauOption } = req.body;
     let payload: any;
     try {
       // @ts-ignore
@@ -301,6 +307,7 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid QR code" });
     }
 
+    await connectDB();
     const guest = await RsvpModel.findOne({ ticketCode: payload.code });
     if (!guest) return res.status(404).json({ success: false, message: "Guest not found" });
 
@@ -312,9 +319,25 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
     guest.checkedInAt = new Date();
     guest.checkedInBy = (req as any).user?.username;
     guest.checkInMethod = "qr";
+    (guest as any).checkInDesk = desk;
+
+    if (guestCountReal !== undefined && guestCountReal !== null) {
+      (guest as any).guestCountReal = Math.max(1, parseInt(guestCountReal) || 1);
+    }
+    if (angpauOption && angpauOption !== "tanpa") {
+      guest.angpauOption = angpauOption;
+      if (angpauOption === "kado" && !guest.stickerNumber) {
+        const lastSticker = await RsvpModel.findOne({ stickerNumber: { $exists: true, $ne: null } }).sort({ stickerNumber: -1 }).select("stickerNumber");
+        guest.stickerNumber = (lastSticker?.stickerNumber ?? 0) + 1;
+      }
+    }
+
     await guest.save();
 
-    return res.json({ success: true, message: "Check-in successful", guest: guest.toObject() });
+    let ticketToken = null;
+    if (guest.ticketCode) ticketToken = signTicketToken(guest.ticketCode, guest.name);
+
+    return res.json({ success: true, message: "Check-in successful", guest: { ...guest.toObject(), ticketToken } });
   } catch (err) {
     req.log.error({ err }, "Admin checkin scan error");
     return res.status(500).json({ error: "Internal server error" });

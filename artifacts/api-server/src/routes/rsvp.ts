@@ -24,6 +24,7 @@ interface IRsvp extends Document {
   checkedInAt?: Date;
   checkedInBy?: string;
   checkInMethod?: string;
+  checkInDesk?: string;
   sentimentScore: number;
   guestQuota: number;
   guestCount: number;
@@ -49,6 +50,7 @@ const RsvpSchema = new Schema<IRsvp>(
     checkedInAt: { type: Date },
     checkedInBy: { type: String },
     checkInMethod: { type: String, enum: ["qr", "manual"] },
+    checkInDesk: { type: String, default: "master" },
     sentimentScore: { type: Number, default: 0 },
     guestQuota: { type: Number, default: 1 },
     guestCount: { type: Number, default: 1 },
