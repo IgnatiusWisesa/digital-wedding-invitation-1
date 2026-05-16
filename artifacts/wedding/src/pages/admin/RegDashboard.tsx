@@ -130,12 +130,16 @@ export const RegDashboard = () => {
                 'Status': g.attendanceStatus || '-',
                 'Acara': g.attendanceChoice || '-',
                 'Tamu (RSVP)': g.guestCount || 1,
-                'Tamu Real': g.guestCountReal ?? '-',
-                'Catatan': g.note || '-',
+                'Tamu Real (Hari H)': g.guestCountReal ?? '-',
+                'Angpau': g.angpauOption === 'kado' ? `Kado #${g.stickerNumber || '?'}` : g.angpauOption === 'transfer' ? 'Transfer' : 'Tanpa',
+                'No. Stiker': g.stickerNumber || '-',
+                'Wishes / Pesan': g.note || '-',
                 'Catatan Admin': g.adminNote || '-',
                 'Check-in': g.isCheckedIn ? 'Ya' : 'Tidak',
-                'Meja': g.checkInDesk || '-',
-                'Waktu Check-in': g.checkedInAt ? new Date(g.checkedInAt).toLocaleString() : '-',
+                'Meja Check-in': g.checkInDesk || '-',
+                'Metode Check-in': g.checkInMethod || '-',
+                'Waktu Check-in': g.checkedInAt ? new Date(g.checkedInAt).toLocaleString('id-ID') : '-',
+                'Waktu RSVP': g.createdAt ? new Date(g.createdAt).toLocaleString('id-ID') : '-',
             }));
             const ws = XLSX.utils.json_to_sheet(rows);
             const wb = XLSX.utils.book_new();

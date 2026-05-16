@@ -145,13 +145,20 @@ export const AdminDashboard = () => {
 
             // Prepare data for Excel
             const excelData = guests.map((guest: any) => ({
-                'Name': guest.name || '-',
-                'Attendance Status': guest.attendanceStatus || '-',
-                'Event': guest.attendanceChoice || '-',
-                'Note': guest.note || '-',
-                'Checked In': guest.isCheckedIn ? 'Yes' : 'No',
-                'Ticket Code': guest.ticketCode || '-',
-                'Created At': guest.createdAt ? new Date(guest.createdAt).toLocaleString() : '-'
+                'Nama': guest.name || '-',
+                'Status': guest.attendanceStatus || '-',
+                'Acara': guest.attendanceChoice || '-',
+                'Tamu (RSVP)': guest.guestCount || 1,
+                'Tamu Real (Hari H)': guest.guestCountReal ?? '-',
+                'Angpau': guest.angpauOption === 'kado' ? `Kado #${guest.stickerNumber || '?'}` : guest.angpauOption === 'transfer' ? 'Transfer' : 'Tanpa',
+                'No. Stiker': guest.stickerNumber || '-',
+                'Wishes / Pesan': guest.note || '-',
+                'Catatan Admin': guest.adminNote || '-',
+                'Check-in': guest.isCheckedIn ? 'Ya' : 'Tidak',
+                'Meja Check-in': guest.checkInDesk || '-',
+                'Metode Check-in': guest.checkInMethod || '-',
+                'Waktu Check-in': guest.checkedInAt ? new Date(guest.checkedInAt).toLocaleString('id-ID') : '-',
+                'Waktu RSVP': guest.createdAt ? new Date(guest.createdAt).toLocaleString('id-ID') : '-',
             }));
 
             console.log('Excel data prepared:', excelData.length, 'rows');
