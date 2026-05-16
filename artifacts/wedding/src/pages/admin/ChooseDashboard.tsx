@@ -78,7 +78,22 @@ export const ChooseDashboard = () => {
                     ))}
                 </div>
 
-                <div className="text-center mt-8">
+                <div className="text-center mt-6">
+                    <button
+                        onClick={() => navigate('/admin/qrcodes')}
+                        className="w-full text-left bg-night-800/40 border border-white/10 hover:border-white/30 rounded-xl p-4 transition-all duration-200 hover:bg-night-800/70 group mb-4"
+                    >
+                        <div className="flex items-center gap-4">
+                            <span className="text-2xl">📱</span>
+                            <div className="flex-1">
+                                <p className="font-medium text-white/70 group-hover:text-white transition-colors">QR Code Kamera &amp; Album</p>
+                                <p className="text-white/40 text-xs mt-0.5">Print QR untuk /snap dan /live-album</p>
+                            </div>
+                            <svg className="w-4 h-4 text-white/20 group-hover:text-white/50 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </button>
                     <button onClick={handleLogout} className="text-red-400/60 hover:text-red-400 text-sm transition-colors">
                         Logout
                     </button>

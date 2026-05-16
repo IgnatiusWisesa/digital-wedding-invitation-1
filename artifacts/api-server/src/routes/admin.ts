@@ -1,8 +1,23 @@
 import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import mongoose, { Schema, Document } from "mongoose";
 import { RsvpModel } from "./rsvp";
 import { logger } from "../lib/logger";
 import { connectDB, getMongoUri } from "../lib/db";
+
+interface IAppSettings extends Document {
+  key: string;
+  value: string;
+}
+
+const AppSettingsSchema = new Schema<IAppSettings>({
+  key: { type: String, required: true, unique: true },
+  value: { type: String, required: true },
+});
+
+export const AppSettingsModel =
+  (mongoose.models.AppSettings as mongoose.Model<IAppSettings>) ||
+  mongoose.model<IAppSettings>("AppSettings", AppSettingsSchema);
 
 const router = Router();
 
@@ -366,6 +381,36 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
     return res.json({ success: true, message: "Check-in successful", guest: { ...guest.toObject(), ticketToken } });
   } catch (err) {
     req.log.error({ err }, "Admin checkin scan error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/admin/app-settings — fetch all settings (key/value pairs)
+router.get("/admin/app-settings", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.json({});
+    await connectDB();
+    const settings = await AppSettingsModel.find({});
+    const map: Record<string, string> = {};
+    for (const s of settings) map[s.key] = s.value;
+    return res.json(map);
+  } catch (err) {
+    req.log.error({ err }, "App settings get error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /api/admin/app-settings — upsert a setting by key
+router.post("/admin/app-settings", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
+    const { key, value } = req.body as { key: string; value: string };
+    if (!key || value === undefined) return res.status(400).json({ error: "key and value required" });
+    await AppSettingsModel.findOneAndUpdate({ key }, { key, value }, { upsert: true, new: true });
+    return res.json({ success: true, key, value });
+  } catch (err) {
+    req.log.error({ err }, "App settings post error");
     return res.status(500).json({ error: "Internal server error" });
   }
 });

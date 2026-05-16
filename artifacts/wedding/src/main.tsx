@@ -6,6 +6,7 @@ import { AdminLogin } from './pages/admin/Login'
 import { AdminDashboard } from './pages/admin/Dashboard'
 import { ChooseDashboard } from './pages/admin/ChooseDashboard'
 import { RegDashboard } from './pages/admin/RegDashboard'
+import { QRCodes } from './pages/admin/QRCodes'
 import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Camera } from './pages/Camera'
@@ -62,6 +63,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     element={
                         <ProtectedRoute>
                             <RegDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/admin/qrcodes"
+                    element={
+                        <ProtectedRoute>
+                            <QRCodes />
                         </ProtectedRoute>
                     }
                 />
