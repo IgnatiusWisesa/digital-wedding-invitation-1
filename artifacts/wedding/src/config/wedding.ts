@@ -23,6 +23,7 @@ export const weddingConfig = {
     },
 
     ceremony: {
+        label: import.meta.env.VITE_CEREMONY_LABEL || 'Holy Matrimony',
         time: import.meta.env.VITE_CEREMONY_TIME || '09:00 AM - 11:00 AM',
         venue: import.meta.env.VITE_CEREMONY_VENUE || "St. Peter's Cathedral",
         address: import.meta.env.VITE_CEREMONY_ADDRESS || 'Jl. Katedral No.7, Jakarta Pusat',
@@ -36,63 +37,25 @@ export const weddingConfig = {
         mapLink: import.meta.env.VITE_RECEPTION_MAP_LINK || 'https://goo.gl/maps/placeholder',
     },
 
+    // Timeline items. Each item supports:
+    //   VITE_TIMELINE_N_TIME  — time string
+    //   VITE_TIMELINE_N_EVENT — event name
+    //   VITE_TIMELINE_N_ICON  — emoji icon
+    //   VITE_TIMELINE_N_TYPE  — "G" = church only, "R" = reception only, "" = always shown
     timeline: (() => {
-        const timelineItems = [];
-        let index = 1;
-        
-        // Keep checking for timeline items until we find a missing one
-        while (true) {
-            const time = import.meta.env[`VITE_TIMELINE_${index}_TIME`];
-            const event = import.meta.env[`VITE_TIMELINE_${index}_EVENT`];
-            const icon = import.meta.env[`VITE_TIMELINE_${index}_ICON`];
-            
-            // If time or event is missing, stop looking for more items
-            if (!time && !event) {
-                break;
-            }
-            
-            // Only add the item if it has at least a time or event
-            if (time || event) {
-                timelineItems.push({
-                    time: time || '',
-                    event: event || '',
-                    icon: icon || '📅',
-                });
-            }
-            
-            index++;
-            
-            // Safety limit to prevent infinite loop
-            if (index > 20) break;
+        const items: { time: string; event: string; icon: string; type: string }[] = [];
+        for (let i = 1; i <= 20; i++) {
+            const time  = import.meta.env[`VITE_TIMELINE_${i}_TIME`];
+            const event = import.meta.env[`VITE_TIMELINE_${i}_EVENT`];
+            if (!time && !event) break;
+            items.push({
+                time:  time  || '',
+                event: event || '',
+                icon:  import.meta.env[`VITE_TIMELINE_${i}_ICON`]  || '📅',
+                type:  import.meta.env[`VITE_TIMELINE_${i}_TYPE`]  || '',
+            });
         }
-        
-        // If no timeline items found, return default timeline
-        if (timelineItems.length === 0) {
-            return [
-                {
-                    time: '09:00 AM',
-                    event: 'Blessing Ceremony',
-                    icon: '⛪',
-                },
-                {
-                    time: '01:00 PM',
-                    event: 'Tea Pai',
-                    icon: '🍵',
-                },
-                {
-                    time: '06:00 PM',
-                    event: 'Wedding Reception',
-                    icon: '🎉',
-                },
-                {
-                    time: '09:00 PM',
-                    event: 'After Party',
-                    icon: '🍾',
-                },
-            ];
-        }
-        
-        return timelineItems;
+        return items;
     })(),
 
     gift: {
