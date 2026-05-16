@@ -1,0 +1,465 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Wedding invitation API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: rsvp
+    description: RSVP operations
+  - name: wishes
+    description: Wishes operations
+  - name: photos
+    description: Photo operations
+  - name: checkin
+    description: Check-in operations
+  - name: admin
+    description: Admin operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /rsvp:
+    post:
+      operationId: submitRsvp
+      tags: [rsvp]
+      summary: Submit RSVP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RsvpInput"
+      responses:
+        "200":
+          description: RSVP submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RsvpResponse"
+        "400":
+          description: Bad request
+
+  /rsvp/wishes:
+    get:
+      operationId: getWishes
+      tags: [wishes]
+      summary: Get guest wishes
+      responses:
+        "200":
+          description: List of wishes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wish"
+
+  /photos:
+    get:
+      operationId: getPhotos
+      tags: [photos]
+      summary: Get all photos
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+
+  /photos/upload:
+    post:
+      operationId: uploadPhoto
+      tags: [photos]
+      summary: Upload a photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUploadInput"
+      responses:
+        "200":
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUploadResponse"
+
+  /checkin:
+    post:
+      operationId: checkIn
+      tags: [checkin]
+      summary: Check in a guest by QR token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckinInput"
+      responses:
+        "200":
+          description: Check-in result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckinResponse"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminTokenResponse"
+        "401":
+          description: Unauthorized
+
+  /admin/guests:
+    get:
+      operationId: getGuests
+      tags: [admin]
+      summary: Get guest list (admin)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Guest list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestListResponse"
+    post:
+      operationId: createGuest
+      tags: [admin]
+      summary: Create guest manually (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestInput"
+      responses:
+        "201":
+          description: Guest created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /admin/guests/{id}:
+    patch:
+      operationId: updateGuest
+      tags: [admin]
+      summary: Update guest (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestUpdate"
+      responses:
+        "200":
+          description: Guest updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Guest"
+
+  /admin/stats:
+    get:
+      operationId: getStats
+      tags: [admin]
+      summary: Get RSVP stats (admin)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /admin/checkin/scan:
+    post:
+      operationId: checkInByQR
+      tags: [admin]
+      summary: Check in guest by QR code (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QRCheckinInput"
+      responses:
+        "200":
+          description: Check-in result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckinResponse"
+
+  /admin/guests/export:
+    get:
+      operationId: exportGuests
+      tags: [admin]
+      summary: Export guests to Excel (admin)
+      responses:
+        "200":
+          description: Excel file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    RsvpInput:
+      type: object
+      required: [name, attendanceChoice, attendanceStatus]
+      properties:
+        name:
+          type: string
+        attendanceChoice:
+          type: string
+        attendanceStatus:
+          type: string
+        note:
+          type: ["string", "null"]
+        guestQuota:
+          type: ["integer", "null"]
+        guestCount:
+          type: ["integer", "null"]
+
+    RsvpResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        rsvp:
+          $ref: "#/components/schemas/Guest"
+
+    Wish:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        note:
+          type: string
+        createdAt:
+          type: string
+
+    Photo:
+      type: object
+      properties:
+        _id:
+          type: string
+        url:
+          type: string
+        guestId:
+          type: string
+        createdAt:
+          type: string
+
+    PhotoUploadInput:
+      type: object
+      properties:
+        fileBase64:
+          type: string
+        guestId:
+          type: string
+
+    PhotoUploadResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        photo:
+          $ref: "#/components/schemas/Photo"
+
+    CheckinInput:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    CheckinResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        guest:
+          $ref: "#/components/schemas/Guest"
+
+    AdminLoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AdminTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        username:
+          type: string
+
+    Guest:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        attendanceStatus:
+          type: string
+        attendanceChoice:
+          type: string
+        note:
+          type: ["string", "null"]
+        isCheckedIn:
+          type: boolean
+        checkedInAt:
+          type: ["string", "null"]
+        checkInMethod:
+          type: ["string", "null"]
+        ticketToken:
+          type: ["string", "null"]
+        guestQuota:
+          type: ["integer", "null"]
+        guestCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    GuestListResponse:
+      type: object
+      properties:
+        guests:
+          type: array
+          items:
+            $ref: "#/components/schemas/Guest"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+
+    GuestInput:
+      type: object
+      required: [name, attendanceStatus, attendanceChoice]
+      properties:
+        name:
+          type: string
+        attendanceStatus:
+          type: string
+        attendanceChoice:
+          type: string
+        note:
+          type: ["string", "null"]
+
+    GuestUpdate:
+      type: object
+      properties:
+        attendanceStatus:
+          type: ["string", "null"]
+        attendanceChoice:
+          type: ["string", "null"]
+        isCheckedIn:
+          type: ["boolean", "null"]
+        note:
+          type: ["string", "null"]
+
+    Stats:
+      type: object
+      properties:
+        total:
+          type: integer
+        attending:
+          type: integer
+        notAttending:
+          type: integer
+        checkedIn:
+          type: integer
+        totalGuestCount:
+          type: ["integer", "null"]
+        byEvent:
+          type: object
+          properties:
+            gereja:
+              type: integer
+            resepsi:
+              type: integer
+            keduanya:
+              type: integer
+
+    QRCheckinInput:
+      type: object
+      required: [qrData]
+      properties:
+        qrData:
+          type: string

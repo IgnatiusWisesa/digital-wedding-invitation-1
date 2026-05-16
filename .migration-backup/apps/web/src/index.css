@@ -1,0 +1,100 @@
+/* Google Fonts - Garden Party Theme */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Great+Vibes&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif text-cream;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+
+  /* Lantern glow effect */
+  .lantern-glow {
+    box-shadow: 0 0 20px rgba(255, 140, 0, 0.4),
+      0 0 40px rgba(255, 140, 0, 0.3),
+      0 0 60px rgba(255, 140, 0, 0.2);
+  }
+
+  /* Warm card style */
+  .warm-card {
+    @apply bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-sm border border-orange-500/30 rounded-2xl shadow-2xl;
+  }
+
+  /* Readable text on dark backgrounds */
+  .text-readable {
+    @apply text-cream;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Lantern animation */
+  .lantern {
+    position: absolute;
+    animation: float-up linear infinite;
+    pointer-events: none;
+    will-change: transform, opacity;
+    transform-style: preserve-3d;
+  }
+
+  @keyframes float-up {
+    0% {
+      transform: translateY(100vh) translateX(0) rotate(var(--rotation-start));
+      opacity: 0;
+    }
+
+    5% {
+      opacity: 1;
+    }
+
+    95% {
+      opacity: 1;
+    }
+
+    100% {
+      transform: translateY(-20vh) translateX(var(--sway)) rotate(var(--rotation-end));
+      opacity: 0;
+    }
+  }
+
+  /* Star animation */
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle ease-in-out infinite;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  }
+
+  @keyframes twinkle {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+}

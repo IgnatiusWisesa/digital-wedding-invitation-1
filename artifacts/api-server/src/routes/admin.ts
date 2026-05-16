@@ -1,0 +1,284 @@
+import { Router, Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { RsvpModel } from "./rsvp";
+import { logger } from "../lib/logger";
+
+const router = Router();
+
+const JWT_SECRET = process.env.JWT_SECRET || "wedding-jwt-secret";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const TICKET_SECRET = process.env.TICKET_SIGNING_SECRET || "secret";
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI || "";
+
+function signAdminToken(username: string): string {
+  // @ts-ignore
+  return jwt.sign({ username, role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
+}
+
+function signTicketToken(code: string, name: string): string {
+  // @ts-ignore
+  return jwt.sign({ code, name }, TICKET_SECRET, { expiresIn: "90d", algorithm: "HS256" });
+}
+
+function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  const token = authHeader.slice(7);
+  try {
+    // @ts-ignore
+    const payload = jwt.verify(token, JWT_SECRET);
+    (req as any).user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
+router.post("/admin/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+  const access_token = signAdminToken(username);
+  return res.json({ access_token, username });
+});
+
+router.get("/admin/stats", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.json({ total: 0, attending: 0, notAttending: 0, checkedIn: 0 });
+
+    const [total, attending, notAttending, checkedIn, guestCountAgg, byEvent] = await Promise.all([
+      RsvpModel.countDocuments(),
+      RsvpModel.countDocuments({ attendanceStatus: "Hadir" }),
+      RsvpModel.countDocuments({ attendanceStatus: "Tidak" }),
+      RsvpModel.countDocuments({ checkedInAt: { $exists: true, $ne: null } }),
+      RsvpModel.aggregate([
+        { $match: { attendanceStatus: "Hadir" } },
+        { $group: { _id: null, total: { $sum: "$guestCount" } } },
+      ]),
+      RsvpModel.aggregate([
+        { $match: { attendanceStatus: "Hadir" } },
+        { $group: { _id: { $toLower: "$attendanceChoice" }, count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const totalGuestCount = guestCountAgg[0]?.total || 0;
+    const byEventMap: Record<string, number> = {};
+    for (const item of byEvent) {
+      byEventMap[item._id] = item.count;
+    }
+
+    return res.json({
+      total,
+      attending,
+      notAttending,
+      checkedIn,
+      totalGuestCount,
+      byEvent: {
+        gereja: byEventMap["gereja"] || 0,
+        resepsi: byEventMap["resepsi"] || 0,
+        keduanya: byEventMap["keduanya"] || 0,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Stats error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/admin/guests/export", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+
+    const ExcelJS = await import("exceljs");
+    const workbook = new ExcelJS.default.Workbook();
+    const sheet = workbook.addWorksheet("Guests");
+    sheet.columns = [
+      { header: "Name", key: "name", width: 30 },
+      { header: "Attendance Status", key: "attendanceStatus", width: 20 },
+      { header: "Attendance Choice", key: "attendanceChoice", width: 20 },
+      { header: "Note", key: "note", width: 40 },
+      { header: "Guest Count", key: "guestCount", width: 15 },
+      { header: "Checked In", key: "isCheckedIn", width: 15 },
+      { header: "Check-in Time", key: "checkedInAt", width: 20 },
+      { header: "Created At", key: "createdAt", width: 20 },
+    ];
+
+    const guests = await RsvpModel.find().sort({ createdAt: -1 });
+    for (const g of guests) {
+      sheet.addRow({
+        name: g.name,
+        attendanceStatus: g.attendanceStatus,
+        attendanceChoice: g.attendanceChoice,
+        note: g.note || "",
+        guestCount: g.guestCount,
+        isCheckedIn: g.isCheckedIn ? "Yes" : "No",
+        checkedInAt: g.checkedInAt ? new Date(g.checkedInAt).toLocaleString() : "",
+        createdAt: g.createdAt ? new Date(g.createdAt).toLocaleString() : "",
+      });
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const filename = `wedding-guests-${new Date().toISOString().split("T")[0]}.xlsx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.send(buffer);
+  } catch (err) {
+    req.log.error({ err }, "Export error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/admin/guests", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.json({ guests: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const search = req.query.search as string;
+    const skip = (page - 1) * limit;
+
+    const query: Record<string, unknown> = {};
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    const [guests, total] = await Promise.all([
+      RsvpModel.find(query).skip(skip).limit(limit).sort({ createdAt: -1 }),
+      RsvpModel.countDocuments(query),
+    ]);
+
+    const guestsWithTokens = guests.map((g) => {
+      let ticketToken = null;
+      if (g.ticketCode && g.attendanceStatus === "Hadir") {
+        ticketToken = signTicketToken(g.ticketCode, g.name);
+      }
+      return { ...g.toObject(), ticketToken };
+    });
+
+    return res.json({
+      guests: guestsWithTokens,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Get guests error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/admin/guests", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+
+    const { name, attendanceStatus, attendanceChoice, note } = req.body;
+    const normalizedName = name.trim().replace(/\s+/g, " ");
+    const searchName = normalizedName.toLowerCase();
+
+    const { randomUUID } = await import("crypto");
+    const ticketCode = randomUUID();
+    const ticketToken = attendanceStatus === "Hadir" ? signTicketToken(ticketCode, normalizedName) : null;
+
+    const newRsvp = await RsvpModel.create({
+      name: normalizedName,
+      normalizedName: searchName,
+      attendanceChoice,
+      attendanceStatus,
+      note,
+      ticketCode: attendanceStatus === "Hadir" ? ticketCode : undefined,
+      ticketIssuedAt: attendanceStatus === "Hadir" ? new Date() : undefined,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Guest created successfully",
+      guest: { ...newRsvp.toObject(), ticketToken },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Create guest error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+
+    const { id } = req.params;
+    const { attendanceStatus, attendanceChoice, isCheckedIn, note } = req.body;
+    const user = (req as any).user;
+
+    const guest = await RsvpModel.findById(id);
+    if (!guest) return res.status(404).json({ error: "Guest not found" });
+
+    if (attendanceStatus !== undefined) {
+      guest.attendanceStatus = attendanceStatus;
+      if (attendanceStatus === "Hadir" && !guest.ticketCode) {
+        const { randomUUID } = await import("crypto");
+        guest.ticketCode = randomUUID();
+        guest.ticketIssuedAt = new Date();
+      }
+    }
+    if (attendanceChoice !== undefined) guest.attendanceChoice = attendanceChoice;
+    if (note !== undefined) guest.note = note;
+    if (isCheckedIn !== undefined) {
+      guest.isCheckedIn = isCheckedIn;
+      if (isCheckedIn && !guest.checkedInAt) {
+        guest.checkedInAt = new Date();
+        guest.checkedInBy = user?.username;
+        guest.checkInMethod = "manual";
+      }
+    }
+
+    await guest.save();
+
+    let ticketToken = null;
+    if (guest.ticketCode && guest.attendanceStatus === "Hadir") {
+      ticketToken = signTicketToken(guest.ticketCode, guest.name);
+    }
+
+    return res.json({ success: true, guest: { ...guest.toObject(), ticketToken } });
+  } catch (err) {
+    req.log.error({ err }, "Update guest error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+
+    const { qrData } = req.body;
+    let payload: any;
+    try {
+      // @ts-ignore
+      payload = jwt.verify(qrData, TICKET_SECRET);
+    } catch {
+      return res.status(400).json({ success: false, message: "Invalid QR code" });
+    }
+
+    const guest = await RsvpModel.findOne({ ticketCode: payload.code });
+    if (!guest) return res.status(404).json({ success: false, message: "Guest not found" });
+
+    if (guest.isCheckedIn) {
+      return res.json({ success: false, message: "Guest already checked in", guest: guest.toObject() });
+    }
+
+    guest.isCheckedIn = true;
+    guest.checkedInAt = new Date();
+    guest.checkedInBy = (req as any).user?.username;
+    guest.checkInMethod = "qr";
+    await guest.save();
+
+    return res.json({ success: true, message: "Check-in successful", guest: guest.toObject() });
+  } catch (err) {
+    req.log.error({ err }, "Admin checkin scan error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+export default router;

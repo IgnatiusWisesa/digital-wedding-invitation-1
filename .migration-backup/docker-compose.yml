@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGO_CONNECTION_STRING=mongodb://mongo:27017/wedding
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - ./apps/api:/usr/src/app
+      - /usr/src/app/node_modules
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+      - "8080:80" # For production build served by Nginx
+    volumes:
+      - ./apps/web:/usr/src/app
+      - /usr/src/app/node_modules
+    stdin_open: true
+
+volumes:
+  mongo_data:

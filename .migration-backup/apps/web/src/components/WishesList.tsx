@@ -1,0 +1,56 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+interface Wish {
+    name: string;
+    note: string;
+    attendanceStatus: string;
+}
+
+export const WishesList = () => {
+    const [wishes, setWishes] = useState<Wish[]>([]);
+
+    useEffect(() => {
+        const fetchWishes = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const res = await axios.get(`${apiUrl}/api/rsvp/wishes`);
+                if (Array.isArray(res.data)) {
+                    setWishes(res.data);
+                }
+            } catch (e) {
+                console.error("Failed to fetch wishes", e);
+            }
+        };
+        fetchWishes();
+        // Poll every 30 seconds
+        const interval = setInterval(fetchWishes, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+
+    return (
+        <div className="mt-12 w-full max-w-2xl mx-auto relative z-10">
+            <h3 className="font-serif text-2xl text-white mb-6 text-center drop-shadow-lg">Wishes from Friends & Family</h3>
+            <div className="bg-gray-900/50 border border-orange-500/30 rounded-lg p-6 max-h-96 overflow-y-auto space-y-4 backdrop-blur-sm">
+                {wishes.length === 0 ? (
+                    <p className="text-cream/60 text-center italic py-8">
+                        No wishes yet. Be the first to share your wishes! 💝
+                    </p>
+                ) : (
+                    wishes.map((wish, idx) => (
+                        <div key={idx} className="border-b border-orange-500/20 pb-4 last:border-0 last:pb-0">
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="font-bold text-white">{wish.name}</h4>
+                                <span className={`text-[10px] px-2 py-1 rounded-full ${wish.attendanceStatus === 'Hadir' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+                                    {wish.attendanceStatus === 'Hadir' ? 'Attending' : 'Cannot Attend'}
+                                </span>
+                            </div>
+                            <p className="text-cream/80 text-sm font-light italic">"{wish.note}"</p>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
