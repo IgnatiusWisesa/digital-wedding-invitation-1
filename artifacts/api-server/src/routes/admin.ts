@@ -22,10 +22,11 @@ function signTicketToken(code: string, name: string): string {
   return jwt.sign({ code, name }, TICKET_SECRET, { expiresIn: "90d", algorithm: "HS256" });
 }
 
-function authMiddleware(req: Request, res: Response, next: NextFunction) {
+function authMiddleware(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
   const token = authHeader.slice(7);
   try {
@@ -34,7 +35,7 @@ function authMiddleware(req: Request, res: Response, next: NextFunction) {
     (req as any).user = payload;
     next();
   } catch {
-    return res.status(401).json({ error: "Invalid token" });
+    res.status(401).json({ error: "Invalid token" });
   }
 }
 

@@ -8,6 +8,7 @@ import { ProtectedRoute } from './components/admin/ProtectedRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Camera } from './pages/Camera'
 import { LiveAlbum } from './pages/LiveAlbum'
+import { InvitePage } from './pages/InvitePage'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -34,6 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/eighteen" element={<App />} />
                 <Route path="/nineteen" element={<App />} />
                 <Route path="/twenty" element={<App />} />
+                <Route path="/invite/:token" element={<InvitePage />} />
                 <Route path="/snap" element={<Camera />} />
                 <Route path="/live-album" element={<LiveAlbum />} />
                 <Route path="/admin/login" element={<AdminLogin />} />

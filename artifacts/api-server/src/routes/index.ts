@@ -4,6 +4,7 @@ import rsvpRouter from "./rsvp";
 import adminRouter from "./admin";
 import photosRouter from "./photos";
 import checkinRouter from "./checkin";
+import sheetsRouter from "./sheets";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(rsvpRouter);
 router.use(adminRouter);
 router.use(photosRouter);
 router.use(checkinRouter);
+router.use(sheetsRouter);
 
 export default router;

@@ -59,6 +59,10 @@ export const AdminDashboard = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showPhotoDrive, setShowPhotoDrive] = useState(false);
+    const [showImportPanel, setShowImportPanel] = useState(false);
+    const [importPreview, setImportPreview] = useState<any[]>([]);
+    const [importLoading, setImportLoading] = useState(false);
+    const [importResult, setImportResult] = useState<any>(null);
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
     const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
     const [photos, setPhotos] = useState<any[]>([]);
@@ -299,6 +303,37 @@ export const AdminDashboard = () => {
         }
     };
 
+    const handleLoadImportPreview = async () => {
+        setImportLoading(true);
+        setImportResult(null);
+        try {
+            const API_URL = getApiUrl();
+            const response = await axios.get(`${API_URL}/api/admin/sheets/preview`, axiosConfig);
+            setImportPreview(response.data.guests || []);
+            setShowImportPanel(true);
+        } catch (err: any) {
+            alert('Gagal membaca spreadsheet: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
+    const handleRunImport = async (overwrite: boolean) => {
+        setImportLoading(true);
+        setImportResult(null);
+        try {
+            const API_URL = getApiUrl();
+            const baseUrl = window.location.origin + (import.meta.env.BASE_URL?.replace(/\/$/, '') || '');
+            const response = await axios.post(`${API_URL}/api/admin/sheets/import`, { baseUrl, overwrite }, axiosConfig);
+            setImportResult(response.data);
+            setImportPreview([]);
+        } catch (err: any) {
+            alert('Import gagal: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setImportLoading(false);
+        }
+    };
+
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_username');
@@ -389,6 +424,13 @@ export const AdminDashboard = () => {
                         className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded font-medium transition-all"
                     >
                         🖼️ Photo Drive
+                    </button>
+                    <button
+                        onClick={handleLoadImportPreview}
+                        disabled={importLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50"
+                    >
+                        {importLoading ? '⏳ Loading...' : '📋 Import Spreadsheet'}
                     </button>
                     <button
                         onClick={handleExport}
@@ -863,6 +905,135 @@ export const AdminDashboard = () => {
                                 Done
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Import Spreadsheet Panel */}
+            {showImportPanel && (
+                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-night-800 border border-blue-500/30 rounded-lg p-6 max-w-4xl w-full h-[85vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-serif text-accent-yellow">📋 Import Undangan dari Spreadsheet</h2>
+                            <button onClick={() => { setShowImportPanel(false); setImportResult(null); setImportPreview([]); }} className="text-white/60 hover:text-white">✕ Tutup</button>
+                        </div>
+
+                        {importResult ? (
+                            <div className="flex-1 overflow-y-auto">
+                                <div className="bg-green-900/30 border border-green-500/40 rounded-lg p-4 mb-4">
+                                    <div className="text-green-400 font-medium mb-1">✅ Import Berhasil!</div>
+                                    <div className="text-white/70 text-sm">
+                                        {importResult.written} link ditulis ke spreadsheet
+                                        {importResult.skipped > 0 && `, ${importResult.skipped} dilewati (sudah ada link)`}
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="text-white/50 border-b border-white/10">
+                                                <th className="text-left py-2 pr-4">#</th>
+                                                <th className="text-left py-2 pr-4">Nama</th>
+                                                <th className="text-left py-2 pr-4">Quota</th>
+                                                <th className="text-left py-2 pr-4">Event</th>
+                                                <th className="text-left py-2">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {importResult.results?.map((r: any, i: number) => (
+                                                <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                                    <td className="py-2 pr-4 text-white/40">{r.row}</td>
+                                                    <td className="py-2 pr-4 text-white font-medium">{r.name}</td>
+                                                    <td className="py-2 pr-4 text-white/70">{r.quota}</td>
+                                                    <td className="py-2 pr-4 text-white/70">{r.event}</td>
+                                                    <td className="py-2">
+                                                        {r.skipped
+                                                            ? <span className="text-yellow-400 text-xs">⏭ Dilewati</span>
+                                                            : <span className="text-green-400 text-xs">✅ Ditulis</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="mt-4 flex gap-3">
+                                    <button
+                                        onClick={() => { setImportResult(null); setImportPreview([]); setShowImportPanel(false); }}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
+                                    >
+                                        Selesai
+                                    </button>
+                                    <button
+                                        onClick={() => handleRunImport(true)}
+                                        disabled={importLoading}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50"
+                                    >
+                                        🔄 Timpa Semua (Re-generate)
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="text-white/60 text-sm mb-3">
+                                    Tab: <span className="text-accent-yellow font-medium">Nama Undangan</span> — {importPreview.length} tamu ditemukan
+                                </div>
+                                <div className="flex-1 overflow-y-auto mb-4">
+                                    <table className="w-full text-sm">
+                                        <thead className="sticky top-0 bg-night-800 z-10">
+                                            <tr className="text-white/50 border-b border-white/10">
+                                                <th className="text-left py-2 pr-4">Baris</th>
+                                                <th className="text-left py-2 pr-4">Nama</th>
+                                                <th className="text-center py-2 pr-4">Quota</th>
+                                                <th className="text-left py-2 pr-4">Event</th>
+                                                <th className="text-left py-2 pr-4">Catatan</th>
+                                                <th className="text-left py-2">Link Ada?</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {importPreview.map((g, i) => (
+                                                <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                                    <td className="py-2 pr-4 text-white/40">{g.rowIndex}</td>
+                                                    <td className="py-2 pr-4 text-white font-medium">{g.name}</td>
+                                                    <td className="py-2 pr-4 text-center text-white/70">{g.quota}</td>
+                                                    <td className="py-2 pr-4">
+                                                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                                            g.event === 'Keduanya' ? 'bg-pink-900/50 text-pink-300' :
+                                                            g.event === 'Gereja' ? 'bg-blue-900/50 text-blue-300' :
+                                                            'bg-amber-900/50 text-amber-300'
+                                                        }`}>{g.event}</span>
+                                                    </td>
+                                                    <td className="py-2 pr-4 text-white/50 text-xs max-w-[140px] truncate">{g.note || '—'}</td>
+                                                    <td className="py-2">
+                                                        {g.existingLink
+                                                            ? <span className="text-green-400 text-xs">✅ Ada</span>
+                                                            : <span className="text-white/30 text-xs">— Belum</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="flex gap-3 items-center flex-wrap">
+                                    <button
+                                        onClick={() => handleRunImport(false)}
+                                        disabled={importLoading}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {importLoading ? '⏳ Memproses...' : '🔗 Generate Link (lewati yang sudah ada)'}
+                                    </button>
+                                    <button
+                                        onClick={() => handleRunImport(true)}
+                                        disabled={importLoading}
+                                        className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded font-medium disabled:opacity-50"
+                                    >
+                                        {importLoading ? '⏳...' : '🔄 Timpa Semua'}
+                                    </button>
+                                    <span className="text-white/40 text-xs">
+                                        Link ditulis ke kolom F spreadsheet
+                                    </span>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
