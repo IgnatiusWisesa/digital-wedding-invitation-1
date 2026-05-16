@@ -108,13 +108,6 @@ function App() {
                         <p className="drop-shadow-md">{weddingConfig.date.day}, {weddingConfig.date.full}</p>
                     </div>
 
-                    {invite && (
-                        <div className="mt-8 px-6 py-4 bg-black/30 rounded-2xl border border-accent-yellow/20 inline-block">
-                            <p className="text-cream/70 text-sm uppercase tracking-widest mb-1">Kepada Yth.</p>
-                            <p className="text-accent-yellow text-xl font-semibold">{invite.name}</p>
-                            {invite.note && <p className="text-cream/50 text-sm italic mt-1">"{invite.note}"</p>}
-                        </div>
-                    )}
                 </div>
 
                 <div className="absolute bottom-24 animate-bounce text-lantern-glow/70">
