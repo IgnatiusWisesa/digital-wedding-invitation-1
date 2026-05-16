@@ -209,20 +209,54 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/admin/sheets/sync-quota — bulk sync guestCount from InviteModel → RsvpModel pending records
+// POST /api/admin/sheets/sync-quota — read latest data from Google Sheet → update InviteModel + RsvpModel
 router.post("/admin/sheets/sync-quota", authMiddleware, async (req, res) => {
   try {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
     await connectDB();
     const { RsvpModel } = await import("./rsvp");
 
-    const invites = await InviteModel.find({});
+    // Read fresh data directly from Google Sheet
+    const connectors = new ReplitConnectors();
+    const tabName = await findTabName(connectors);
+    const readResp = await connectors.proxy(
+      "google-sheet",
+      `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A:F`
+    );
+    const data = await readResp.json() as any;
+    const rows = (data.values || []) as string[][];
+
     let updated = 0;
-    for (const invite of invites) {
-      const updateFields: Record<string, unknown> = { guestCount: invite.quota, guestQuota: invite.quota };
-      if (invite.note) updateFields.adminNote = invite.note;
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const name = (row[1] || "").trim();
+      if (!name) continue;
+      const quota = parseInt(row[2]) || 1;
+      const event = parseEvent(row[3] || "");
+      const note = (row[4] || "").trim();
+      const existingLink = (row[5] || "").trim();
+
+      // Update InviteModel with latest quota/note from sheet
+      if (existingLink) {
+        const match = existingLink.match(/\/invite\/([a-zA-Z0-9_-]{6,12})$/);
+        if (match) {
+          await InviteModel.updateOne(
+            { code: match[1] },
+            { $set: { quota, event, note } }
+          );
+        }
+      }
+      // Also try matching by name
+      await InviteModel.updateMany(
+        { name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+        { $set: { quota, event, note } }
+      );
+
+      // Sync into RsvpModel
+      const updateFields: Record<string, unknown> = { guestCount: quota, guestQuota: quota };
+      if (note) updateFields.adminNote = note;
       const result = await RsvpModel.updateMany(
-        { normalizedName: invite.name.trim().toLowerCase() },
+        { normalizedName: name.toLowerCase() },
         { $set: updateFields }
       );
       updated += result.modifiedCount;
