@@ -44,7 +44,7 @@ function App() {
                         <div className="relative flex justify-center items-center mb-6">
                             <div className="absolute w-40 h-40 md:w-56 md:h-56 bg-accent-yellow/40 blur-[50px] rounded-full"></div>
                             <img
-                                src="/asset/logo.png"
+                                src="/logo-new.png"
                                 alt="Logo"
                                 className="relative z-10 w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-[0_0_40px_rgba(255,223,0,1)]"
                             />
