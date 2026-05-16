@@ -37,7 +37,8 @@ export const RsvpForm: React.FC = () => {
         attendanceChoice: 'Resepsi',
         attendanceStatus: 'Hadir',
         note: '',
-        guestCount: 1
+        guestCount: 1,
+        angpauOption: 'tanpa'
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -190,6 +191,32 @@ export const RsvpForm: React.FC = () => {
                             <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                         </svg>
                     </div>
+                </div>
+            </div>
+
+            {/* Angpau option - always visible */}
+            <div className="mb-6">
+                <label className="block text-lantern-light text-base font-semibold mb-3 font-serif">
+                    Angpau / Gift
+                </label>
+                <div className="space-y-2">
+                    {[
+                        { value: 'tanpa', label: 'Tanpa Angpao' },
+                        { value: 'transfer', label: 'Transfer' },
+                        { value: 'kado', label: 'Kado / Amplop' },
+                    ].map(opt => (
+                        <label key={opt.value} className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-garden-night/50 transition-all">
+                            <input
+                                type="radio"
+                                name="angpauOption"
+                                value={opt.value}
+                                checked={formData.angpauOption === opt.value}
+                                onChange={handleChange}
+                                className="form-radio text-lantern-glow focus:ring-lantern-glow bg-garden-night border-lantern-glow/50 w-5 h-5"
+                            />
+                            <span className="text-cream text-base">{opt.label}</span>
+                        </label>
+                    ))}
                 </div>
             </div>
 

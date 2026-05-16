@@ -183,7 +183,7 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
     await connectDB();
 
-    const { name, attendanceStatus, attendanceChoice, note } = req.body;
+    const { name, attendanceStatus, attendanceChoice, note, guestCount = 1, angpauOption = "tanpa" } = req.body;
     const normalizedName = name.trim().replace(/\s+/g, " ");
     const searchName = normalizedName.toLowerCase();
 
@@ -191,12 +191,21 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
     const ticketCode = randomUUID();
     const ticketToken = attendanceStatus === "Hadir" ? signTicketToken(ticketCode, normalizedName) : null;
 
+    let stickerNumber: number | undefined;
+    if (angpauOption === "kado") {
+      const lastSticker = await RsvpModel.findOne({ stickerNumber: { $exists: true } }).sort({ stickerNumber: -1 }).select("stickerNumber");
+      stickerNumber = (lastSticker?.stickerNumber ?? 0) + 1;
+    }
+
     const newRsvp = await RsvpModel.create({
       name: normalizedName,
       normalizedName: searchName,
       attendanceChoice,
       attendanceStatus,
       note,
+      guestCount: Math.max(1, parseInt(guestCount) || 1),
+      angpauOption,
+      ...(stickerNumber !== undefined ? { stickerNumber } : {}),
       ticketCode: attendanceStatus === "Hadir" ? ticketCode : undefined,
       ticketIssuedAt: attendanceStatus === "Hadir" ? new Date() : undefined,
     });
@@ -217,9 +226,10 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
 
     const { id } = req.params;
-    const { attendanceStatus, attendanceChoice, isCheckedIn, note } = req.body;
+    const { attendanceStatus, attendanceChoice, isCheckedIn, note, guestCount, angpauOption } = req.body;
     const user = (req as any).user;
 
+    await connectDB();
     const guest = await RsvpModel.findById(id);
     if (!guest) return res.status(404).json({ error: "Guest not found" });
 
@@ -233,6 +243,15 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     }
     if (attendanceChoice !== undefined) guest.attendanceChoice = attendanceChoice;
     if (note !== undefined) guest.note = note;
+    if (guestCount !== undefined) guest.guestCount = Math.max(1, parseInt(guestCount) || 1);
+    if (angpauOption !== undefined) {
+      const prevOption = guest.angpauOption;
+      guest.angpauOption = angpauOption;
+      if (angpauOption === "kado" && prevOption !== "kado" && !guest.stickerNumber) {
+        const lastSticker = await RsvpModel.findOne({ stickerNumber: { $exists: true } }).sort({ stickerNumber: -1 }).select("stickerNumber");
+        guest.stickerNumber = (lastSticker?.stickerNumber ?? 0) + 1;
+      }
+    }
     if (isCheckedIn !== undefined) {
       guest.isCheckedIn = isCheckedIn;
       if (isCheckedIn && !guest.checkedInAt) {

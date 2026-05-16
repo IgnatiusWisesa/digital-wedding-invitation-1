@@ -13,6 +13,9 @@ interface Guest {
     attendanceStatus: string;
     attendanceChoice: string;
     note: string;
+    guestCount?: number;
+    angpauOption?: string;
+    stickerNumber?: number;
     isCheckedIn?: boolean;
     checkedInAt?: string;
     checkInMethod?: string;
@@ -57,7 +60,7 @@ export const AdminDashboard = () => {
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
     const [selectedQrGuest, setSelectedQrGuest] = useState<Guest | null>(null);
     const [photos, setPhotos] = useState<any[]>([]);
-    const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', isCheckedIn: false });
+    const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', guestCount: 1, angpauOption: 'tanpa', isCheckedIn: false });
     const username = localStorage.getItem('admin_username');
 
     const token = localStorage.getItem('admin_token');
@@ -235,6 +238,8 @@ export const AdminDashboard = () => {
             attendanceStatus: guest.attendanceStatus,
             attendanceChoice: guest.attendanceChoice,
             note: guest.note || '',
+            guestCount: guest.guestCount || 1,
+            angpauOption: guest.angpauOption || 'tanpa',
             isCheckedIn: guest.isCheckedIn || false
         });
         setShowEditModal(true);
@@ -248,6 +253,8 @@ export const AdminDashboard = () => {
                 attendanceStatus: formData.attendanceStatus,
                 attendanceChoice: formData.attendanceChoice,
                 note: formData.note,
+                guestCount: formData.guestCount,
+                angpauOption: formData.angpauOption,
                 isCheckedIn: formData.isCheckedIn
             }, axiosConfig);
             if (response.data.success) {
@@ -407,6 +414,7 @@ export const AdminDashboard = () => {
                                 <th className="text-left p-4 text-accent-yellow font-medium">Status</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Event</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Guests</th>
+                                <th className="text-left p-4 text-accent-yellow font-medium">Angpau</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Note</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Checked In</th>
                                 <th className="text-left p-4 text-accent-yellow font-medium">Actions</th>
@@ -438,6 +446,17 @@ export const AdminDashboard = () => {
                                             <span className="px-2 py-1 rounded text-xs bg-purple-500/20 text-purple-300">
                                                 {(guest as any).guestCount || 1} 👥
                                             </span>
+                                        </td>
+                                        <td className="p-4">
+                                            {!guest.angpauOption || guest.angpauOption === 'tanpa' ? (
+                                                <span className="text-white/40 text-sm">–</span>
+                                            ) : guest.angpauOption === 'transfer' ? (
+                                                <span className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-300">Transfer</span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded text-xs bg-amber-500/20 text-amber-300 font-mono font-bold">
+                                                    🎁 #{guest.stickerNumber}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="p-4 text-white/60 text-sm max-w-xs truncate">{guest.note || '-'}</td>
                                         <td className="p-4">
@@ -547,6 +566,28 @@ export const AdminDashboard = () => {
                                 </select>
                             </div>
                             <div>
+                                <label className="block text-white/80 mb-2">Number of Guests</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={formData.guestCount}
+                                    onChange={(e) => setFormData({ ...formData, guestCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">Angpau / Gift</label>
+                                <select
+                                    value={formData.angpauOption}
+                                    onChange={(e) => setFormData({ ...formData, angpauOption: e.target.value })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
+                                >
+                                    <option value="tanpa">Tanpa Angpao</option>
+                                    <option value="transfer">Transfer</option>
+                                    <option value="kado">Kado / Amplop</option>
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-white/80 mb-2">Note (Optional)</label>
                                 <textarea
                                     value={formData.note}
@@ -576,7 +617,7 @@ export const AdminDashboard = () => {
                                 <button
                                     onClick={() => {
                                         setShowAddModal(false);
-                                        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', isCheckedIn: false });
+                                        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', guestCount: 1, angpauOption: 'tanpa', isCheckedIn: false });
                                     }}
                                     className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-4 rounded transition-all"
                                 >
@@ -616,6 +657,34 @@ export const AdminDashboard = () => {
                                     <option value="Resepsi">Resepsi</option>
                                     <option value="Keduanya">Keduanya</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">Number of Guests</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    value={formData.guestCount}
+                                    onChange={(e) => setFormData({ ...formData, guestCount: Math.max(1, parseInt(e.target.value) || 1) })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/80 mb-2">Angpau / Gift</label>
+                                <select
+                                    value={formData.angpauOption}
+                                    onChange={(e) => setFormData({ ...formData, angpauOption: e.target.value })}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
+                                >
+                                    <option value="tanpa">Tanpa Angpao</option>
+                                    <option value="transfer">Transfer</option>
+                                    <option value="kado">Kado / Amplop</option>
+                                </select>
+                                {formData.angpauOption === 'kado' && selectedGuest?.stickerNumber && (
+                                    <p className="mt-2 text-amber-400 text-sm font-mono">Stiker: #{selectedGuest.stickerNumber}</p>
+                                )}
+                                {formData.angpauOption === 'kado' && !selectedGuest?.stickerNumber && (
+                                    <p className="mt-2 text-amber-400/70 text-xs">Nomor stiker baru akan ditetapkan saat disimpan.</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">Note</label>
