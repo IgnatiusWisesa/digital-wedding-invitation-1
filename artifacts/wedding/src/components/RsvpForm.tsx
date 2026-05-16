@@ -46,7 +46,7 @@ export const RsvpForm: React.FC = () => {
         attendanceChoice: defaultChoice,
         attendanceStatus: 'Hadir',
         note: '',
-        guestCount: 1,
+        guestCount: guestQuota,
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -238,11 +238,6 @@ export const RsvpForm: React.FC = () => {
                         </div>
                     )}
                 </div>
-                {eventLocked && (
-                    <p className="text-cream/40 text-xs mt-1">
-                        🔒 {invite?.event === 'Gereja' ? 'Hanya acara gereja' : 'Hanya acara resepsi'}
-                    </p>
-                )}
             </div>
 
             {/* Wishes */}
