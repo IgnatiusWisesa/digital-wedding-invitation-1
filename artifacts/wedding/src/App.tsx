@@ -11,10 +11,12 @@ import { Section } from './components/Section'
 import { GiftSection } from './components/GiftSection'
 import { WishesList } from './components/WishesList'
 import { weddingConfig } from './config/wedding'
+import { useInvite } from './context/InviteContext'
 
 function App() {
     const [showSplash, setShowSplash] = useState(true)
     const audioPlayerRef = useRef<AudioPlayerRef | null>(null)
+    const invite = useInvite()
 
     useEffect(() => {
         if (showSplash) {
@@ -58,11 +60,19 @@ function App() {
                         }}>
                             {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname}
                         </h1>
+                        {invite && (
+                            <p className="text-lantern-light/80 text-lg">
+                                Kepada Yth. <span className="font-semibold text-accent-yellow">{invite.name}</span>
+                            </p>
+                        )}
+                        {invite?.note && (
+                            <p className="text-cream/60 text-sm italic max-w-xs mx-auto">"{invite.note}"</p>
+                        )}
                         <button
                             onClick={handleEnter}
                             className="mt-8 px-8 py-3 bg-gradient-to-r from-accent-yellow to-accent-green text-night-900 rounded-full font-semibold uppercase tracking-wider hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
-                            Open Invitation
+                            {invite ? 'Buka Undangan' : 'Open Invitation'}
                         </button>
                     </div>
                 </div>
@@ -97,6 +107,14 @@ function App() {
                     <div className="text-white text-lg md:text-xl font-light tracking-widest mt-8">
                         <p className="drop-shadow-md">{weddingConfig.date.day}, {weddingConfig.date.full}</p>
                     </div>
+
+                    {invite && (
+                        <div className="mt-8 px-6 py-4 bg-black/30 rounded-2xl border border-accent-yellow/20 inline-block">
+                            <p className="text-cream/70 text-sm uppercase tracking-widest mb-1">Kepada Yth.</p>
+                            <p className="text-accent-yellow text-xl font-semibold">{invite.name}</p>
+                            {invite.note && <p className="text-cream/50 text-sm italic mt-1">"{invite.note}"</p>}
+                        </div>
+                    )}
                 </div>
 
                 <div className="absolute bottom-24 animate-bounce text-lantern-glow/70">
