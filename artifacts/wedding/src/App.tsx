@@ -102,9 +102,6 @@ function App() {
                                 Kepada Yth. <span className="font-semibold text-accent-yellow">{invite.name}</span>
                             </p>
                         )}
-                        {invite?.note && (
-                            <p className="text-cream/60 text-sm italic max-w-xs mx-auto">"{invite.note}"</p>
-                        )}
                         <button
                             onClick={handleEnter}
                             className="mt-8 px-8 py-3 bg-gradient-to-r from-accent-yellow to-accent-green text-night-900 rounded-full font-semibold uppercase tracking-wider hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
