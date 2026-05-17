@@ -2,14 +2,39 @@ import { Router } from "express";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import mongoose, { Schema, model, models } from "mongoose";
-import { ReplitConnectors } from "@replit/connectors-sdk";
+import { google } from "googleapis";
 import { connectDB, getMongoUri } from "../lib/db";
 
 const router = Router();
 
-const SHEET_ID = "15kDvVvnn9Hwy-E0TcnQIdZEfpBjpBvC7XVF3lY8EYNM";
-const TARGET_SHEET_GID = 768801319;
 const MONGODB_URI = getMongoUri();
+const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
+const TARGET_SHEET_GID = 768801319;
+
+// Initialize Google Sheets API client from service account
+function getGoogleSheetsClient() {
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not configured");
+  }
+  if (!GOOGLE_SHEET_ID) {
+    throw new Error("GOOGLE_SHEET_ID environment variable is not configured");
+  }
+
+  let credentials;
+  try {
+    credentials = JSON.parse(serviceAccountJson);
+  } catch (e) {
+    throw new Error("Invalid GOOGLE_SERVICE_ACCOUNT_JSON format");
+  }
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+
+  return google.sheets({ version: "v4", auth });
+}
 
 // ── Invite model ──────────────────────────────────────────────
 interface IInvite {
@@ -38,6 +63,14 @@ export const InviteModel =
 
 // ── Helpers ───────────────────────────────────────────────────
 
+function parseEvent(raw: string): string {
+  if (!raw) return "Resepsi";
+  const v = raw.trim().toUpperCase();
+  if (v === "GR" || v === "KEDUANYA" || v === "BOTH") return "Keduanya";
+  if (v === "G" || v === "GEREJA" || v === "CHURCH") return "Gereja";
+  return "Resepsi";
+}
+
 function authMiddleware(req: any, res: any, next: any) {
   const JWT_SECRET = process.env.JWT_SECRET || "wedding-jwt-secret";
   const authHeader = req.headers.authorization;
@@ -54,29 +87,20 @@ function authMiddleware(req: any, res: any, next: any) {
   }
 }
 
-function parseEvent(raw: string): string {
-  if (!raw) return "Resepsi";
-  const v = raw.trim().toUpperCase();
-  if (v === "GR" || v === "KEDUANYA" || v === "BOTH") return "Keduanya";
-  if (v === "G" || v === "GEREJA" || v === "CHURCH") return "Gereja";
-  return "Resepsi";
-}
-
 /** Generate a short URL-safe code, e.g. "a3b9k2mp" */
 function makeShortCode(): string {
   return crypto.randomBytes(6).toString("base64url").slice(0, 8);
 }
 
-async function findTabName(connectors: ReplitConnectors): Promise<string> {
-  const metaResp = await connectors.proxy(
-    "google-sheet",
-    `/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`
-  );
-  const meta = await metaResp.json() as any;
-  const sheets = meta.sheets || [];
-  const target = sheets.find((s: any) => s.properties?.sheetId === TARGET_SHEET_GID);
+async function findTabName(sheets: any): Promise<string> {
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId: GOOGLE_SHEET_ID,
+    fields: "sheets.properties",
+  });
+  const sheetsList = response.data.sheets || [];
+  const target = sheetsList.find((s: any) => s.properties?.sheetId === TARGET_SHEET_GID);
   if (target) return target.properties.title as string;
-  return sheets[0]?.properties?.title || "Sheet1";
+  return sheetsList[0]?.properties?.title || "Sheet1";
 }
 
 // ── Routes ────────────────────────────────────────────────────
@@ -84,14 +108,13 @@ async function findTabName(connectors: ReplitConnectors): Promise<string> {
 // GET /api/admin/sheets/preview
 router.get("/admin/sheets/preview", authMiddleware, async (req, res) => {
   try {
-    const connectors = new ReplitConnectors();
-    const tabName = await findTabName(connectors);
-    const response = await connectors.proxy(
-      "google-sheet",
-      `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A:F`
-    );
-    const data = await response.json() as any;
-    const rows = (data.values || []) as string[][];
+    const sheets = getGoogleSheetsClient();
+    const tabName = await findTabName(sheets);
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: `${encodeURIComponent(tabName)}!A:F`,
+    });
+    const rows = (response.data.values || []) as string[][];
     const guests = rows.slice(1).map((row, i) => ({
       rowIndex: i + 2,
       name: row[1] || "",
@@ -101,9 +124,13 @@ router.get("/admin/sheets/preview", authMiddleware, async (req, res) => {
       existingLink: row[5] || "",
     })).filter(g => g.name.trim() !== "");
     return res.json({ guests, tabName });
-  } catch (err) {
+  } catch (err: any) {
     req.log.error({ err }, "Sheets preview error");
-    return res.status(500).json({ error: "Failed to read sheet" });
+    const message = err.message || "Failed to read sheet";
+    if (message.includes("not configured")) {
+      return res.status(500).json({ error: "Google Sheets credentials are not configured" });
+    }
+    return res.status(500).json({ error: message });
   }
 });
 
@@ -115,14 +142,13 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
 
     if (MONGODB_URI) await connectDB();
 
-    const connectors = new ReplitConnectors();
-    const tabName = await findTabName(connectors);
-    const readResp = await connectors.proxy(
-      "google-sheet",
-      `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A:F`
-    );
-    const data = await readResp.json() as any;
-    const rows = (data.values || []) as string[][];
+    const sheets = getGoogleSheetsClient();
+    const tabName = await findTabName(sheets);
+    const readResp = await sheets.spreadsheets.values.get({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: `${encodeURIComponent(tabName)}!A:F`,
+    });
+    const rows = (readResp.data.values || []) as string[][];
 
     const batchData: { range: string; values: string[][] }[] = [];
     const results: { name: string; url: string; row: number; skipped: boolean; quota: number; event: string }[] = [];
@@ -180,16 +206,14 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
 
     // Write all URLs to sheet in one batch call
     if (batchData.length > 0) {
-      const writeResp = await connectors.proxy(
-        "google-sheet",
-        `/v4/spreadsheets/${SHEET_ID}/values:batchUpdate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ valueInputOption: "RAW", data: batchData }),
-        }
-      );
-      const writeData = await writeResp.json() as any;
+      const writeResp = await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: GOOGLE_SHEET_ID,
+        requestBody: {
+          valueInputOption: "RAW",
+          data: batchData,
+        },
+      });
+      const writeData = writeResp.data as any;
       if (writeData.error) {
         req.log.error({ writeData }, "Sheet write error");
         return res.status(500).json({ error: "Failed to write links to sheet", detail: writeData.error });
@@ -203,9 +227,13 @@ router.post("/admin/sheets/import", authMiddleware, async (req, res) => {
       skipped: results.filter(r => r.skipped).length,
       results,
     });
-  } catch (err) {
+  } catch (err: any) {
     req.log.error({ err }, "Sheets import error");
-    return res.status(500).json({ error: "Import failed" });
+    const message = err.message || "Import failed";
+    if (message.includes("not configured")) {
+      return res.status(500).json({ error: "Google Sheets credentials are not configured" });
+    }
+    return res.status(500).json({ error: message });
   }
 });
 
@@ -217,14 +245,13 @@ router.post("/admin/sheets/sync-quota", authMiddleware, async (req, res) => {
     const { RsvpModel } = await import("./rsvp");
 
     // Read fresh data directly from Google Sheet
-    const connectors = new ReplitConnectors();
-    const tabName = await findTabName(connectors);
-    const readResp = await connectors.proxy(
-      "google-sheet",
-      `/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A:F`
-    );
-    const data = await readResp.json() as any;
-    const rows = (data.values || []) as string[][];
+    const sheets = getGoogleSheetsClient();
+    const tabName = await findTabName(sheets);
+    const readResp = await sheets.spreadsheets.values.get({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: `${encodeURIComponent(tabName)}!A:F`,
+    });
+    const rows = (readResp.data.values || []) as string[][];
 
     let updated = 0;
     for (let i = 1; i < rows.length; i++) {
@@ -262,9 +289,13 @@ router.post("/admin/sheets/sync-quota", authMiddleware, async (req, res) => {
       updated += result.modifiedCount;
     }
     return res.json({ success: true, updated });
-  } catch (err) {
+  } catch (err: any) {
     req.log.error({ err }, "Sync quota error");
-    return res.status(500).json({ error: "Sync failed" });
+    const message = err.message || "Sync failed";
+    if (message.includes("not configured")) {
+      return res.status(500).json({ error: "Google Sheets credentials are not configured" });
+    }
+    return res.status(500).json({ error: message });
   }
 });
 
