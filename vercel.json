@@ -7,6 +7,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://1832d152-97d3-4cc7-8063-81edd025d141-00-113zshju2e15p.worf.replit.dev/api-server/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
