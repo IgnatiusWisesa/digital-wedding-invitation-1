@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import QRCode from 'react-qr-code';
 import { getApiUrl } from '../../config/api';
@@ -126,65 +125,15 @@ export const AdminDashboard = () => {
 
     const handleExport = async () => {
         try {
-            console.log('=== EXCEL EXPORT STARTED ===');
-
             const API_URL = getApiUrl();
-            // Fetch all guests data as JSON
-            const response = await axios.get(`${API_URL}/api/admin/guests`, {
+            const response = await axios.get(`${API_URL}/api/admin/guests/export`, {
                 ...axiosConfig,
-                params: { page: 1, limit: 1000 } // Get all guests
+                responseType: 'blob',
             });
-
-            console.log('Guest data received:', response.data);
-            const guests = response.data.guests || [];
-
-            if (guests.length === 0) {
-                alert('No guests to export');
-                return;
-            }
-
-            // Prepare data for Excel
-            const excelData = guests.map((guest: any) => ({
-                'Nama': guest.name || '-',
-                'Status': guest.attendanceStatus || '-',
-                'Acara': guest.attendanceChoice || '-',
-                'Tamu (RSVP)': guest.guestCount || 1,
-                'Tamu Real (Hari H)': guest.guestCountReal ?? '-',
-                'Angpau': guest.angpauOption === 'kado' ? `Kado #${guest.stickerNumber || '?'}` : guest.angpauOption === 'transfer' ? 'Transfer' : 'Tanpa',
-                'No. Stiker': guest.stickerNumber || '-',
-                'Wishes / Pesan': guest.note || '-',
-                'Catatan Admin': guest.adminNote || '-',
-                'Check-in': guest.isCheckedIn ? 'Ya' : 'Tidak',
-                'Meja Check-in': guest.checkInDesk || '-',
-                'Metode Check-in': guest.checkInMethod || '-',
-                'Waktu Check-in': guest.checkedInAt ? new Date(guest.checkedInAt).toLocaleString('id-ID') : '-',
-                'Waktu RSVP': guest.createdAt ? new Date(guest.createdAt).toLocaleString('id-ID') : '-',
-            }));
-
-            console.log('Excel data prepared:', excelData.length, 'rows');
-
-            // Create worksheet
-            const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-            // Create workbook
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Guests');
-
-            // Generate filename
             const filename = `wedding-guests-${new Date().toISOString().split('T')[0]}.xlsx`;
-
-            // Generate Excel file as array buffer
-            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-            // Create blob
-            const blob = new Blob([excelBuffer], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-
-            // Use FileSaver to download with proper filename
-            saveAs(blob, filename);
-
-            console.log('=== EXCEL EXPORT COMPLETED ===');
+            saveAs(new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }), filename);
         } catch (error) {
             console.error('Export error:', error);
             alert('Failed to export data');
