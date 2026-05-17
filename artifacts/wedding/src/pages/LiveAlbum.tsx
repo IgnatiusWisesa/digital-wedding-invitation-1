@@ -40,15 +40,24 @@ export const LiveAlbum: React.FC = () => {
             if (res.ok) {
                 const data: Photo[] = await res.json();
                 setPhotos(data);
-                setShuffled(prev => {
-                    // Keep shuffle stable if same count, re-shuffle on new photos
-                    if (prev.length === data.length) return prev;
-                    return shuffle(data);
-                });
+                // Always shuffle fresh — random order, never by date
+                setShuffled(shuffle(data));
             }
         } catch { /* silent */ }
         finally { setLoading(false); }
     }, [API_URL]);
+
+    // Seeded per-photo random values for visual variety (stable across re-renders)
+    const cardVariants = React.useMemo(() => {
+        return Array.from({ length: 200 }, (_, i) => {
+            const r = ((i * 2654435761) >>> 0) / 0xffffffff;
+            const r2 = (((i + 99) * 2246822519) >>> 0) / 0xffffffff;
+            return {
+                mt: Math.floor(r * 32),         // 0–32px top margin
+                wide: r2 > 0.82,                // ~18% cards get double column
+            };
+        });
+    }, []);
 
     useEffect(() => {
         fetchPhotos();
@@ -212,32 +221,34 @@ export const LiveAlbum: React.FC = () => {
                 PINTEREST GALLERY VIEW
             ══════════════════════════════════ */}
             {!loading && photos.length > 0 && view === 'gallery' && (
-                <div className="px-3 md:px-6 pb-12">
-                    <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3">
-                        {photos.map((p, i) => (
-                            <div
-                                key={p._id}
-                                onClick={() => setLightbox(p)}
-                                className="break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden bg-gray-900 border border-white/5 shadow-lg hover:shadow-accent-yellow/10 hover:border-white/20 transition-all duration-300"
-                                style={{
-                                    animationDelay: `${(i % 20) * 40}ms`,
-                                }}
-                            >
-                                <img
-                                    src={p.url || `${API_URL}/uploads/${p.filename}`}
-                                    alt="Guest memory"
-                                    className="w-full h-auto block group-hover:scale-[1.03] transition-transform duration-500"
-                                    loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 pointer-events-none">
-                                    {p.guestId && p.guestId !== 'anonymous' && (
-                                        <p className="text-white/80 text-xs font-medium truncate">{p.guestId}</p>
-                                    )}
+                <div className="px-2 md:px-5 pb-12">
+                    {/* Pinterest masonry — CSS columns with random top offsets */}
+                    <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-3">
+                        {shuffled.map((p, i) => {
+                            const v = cardVariants[i % cardVariants.length];
+                            return (
+                                <div
+                                    key={p._id}
+                                    onClick={() => setLightbox(p)}
+                                    className="break-inside-avoid relative group cursor-zoom-in rounded-xl overflow-hidden bg-gray-900 border border-white/5 shadow-lg hover:shadow-accent-yellow/10 hover:border-white/20 transition-all duration-300 mb-2 md:mb-3"
+                                    style={{ marginTop: v.mt }}
+                                >
+                                    <img
+                                        src={p.url || `${API_URL}/uploads/${p.filename}`}
+                                        alt="Guest memory"
+                                        className="w-full h-auto block group-hover:scale-[1.04] transition-transform duration-700"
+                                        loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 pointer-events-none">
+                                        {p.guestId && p.guestId !== 'anonymous' && (
+                                            <p className="text-white/80 text-xs font-medium truncate">{p.guestId}</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
-                    <p className="text-center text-white/20 text-xs mt-8">{photos.length} foto</p>
+                    <p className="text-center text-white/20 text-xs mt-6">{photos.length} foto</p>
                 </div>
             )}
 
