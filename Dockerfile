@@ -1,14 +1,25 @@
-FROM node:20-alpine
-
-WORKDIR /app
+FROM node:22-alpine AS builder
 
 RUN npm install -g pnpm
 
-COPY . .
+WORKDIR /app
 
-RUN pnpm install
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY lib/ ./lib/
+COPY artifacts/api-server/ ./artifacts/api-server/
+
+RUN pnpm install --frozen-lockfile
+
 RUN pnpm --filter @workspace/api-server run build
 
-EXPOSE 3001
+FROM node:22-alpine
 
-CMD ["node", "--enable-source-maps", "artifacts/api-server/dist/index.mjs"]
+WORKDIR /app
+
+COPY --from=builder /app/artifacts/api-server/dist ./dist
+
+EXPOSE 3000
+
+ENV NODE_ENV=production
+
+CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
