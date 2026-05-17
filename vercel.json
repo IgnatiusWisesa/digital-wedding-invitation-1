@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install -g pnpm && pnpm install",
   "buildCommand": "pnpm --filter @workspace/wedding run build",
-  "outputDirectory": "artifacts/wedding/dist",
+  "outputDirectory": "artifacts/wedding/dist/public",
   "framework": null
 }
