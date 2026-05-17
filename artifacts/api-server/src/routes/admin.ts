@@ -156,7 +156,10 @@ router.get("/admin/guests/export", authMiddleware, async (req, res) => {
       { header: "Created At", key: "createdAt", width: 20 },
     ];
 
-    const guests = await RsvpModel.find().sort({ checkedInAt: -1, createdAt: -1 });
+    const deskFilter = req.query.desk as string | undefined;
+    const exportQuery: Record<string, unknown> = {};
+    if (deskFilter) { exportQuery.checkInDesk = deskFilter; exportQuery.isCheckedIn = true; }
+    const guests = await RsvpModel.find(exportQuery).sort({ checkedInAt: -1, createdAt: -1 });
     for (const g of guests) {
       sheet.addRow({
         name: g.name,
