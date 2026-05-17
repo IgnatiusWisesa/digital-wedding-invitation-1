@@ -13,9 +13,16 @@ const TARGET_SHEET_GID = 768801319;
 
 // Initialize Google Sheets API client from service account
 function getGoogleSheetsClient() {
-  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  const serviceAccountJson =
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64
+      ? Buffer.from(
+          process.env.GOOGLE_SERVICE_ACCOUNT_JSON_BASE64,
+          "base64"
+        ).toString("utf8")
+      : process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
   if (!serviceAccountJson) {
-    throw new Error("GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not configured");
+    throw new Error("Google service account environment variable is not configured");
   }
   if (!GOOGLE_SHEET_ID) {
     throw new Error("GOOGLE_SHEET_ID environment variable is not configured");
