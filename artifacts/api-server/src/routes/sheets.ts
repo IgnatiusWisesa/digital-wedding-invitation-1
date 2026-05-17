@@ -31,6 +31,9 @@ function getGoogleSheetsClient() {
   let credentials;
   try {
     credentials = JSON.parse(serviceAccountJson);
+    if (credentials.private_key) {
+      credentials.private_key = credentials.private_key.replace(/\\\\n/g, "\\n").replace(/\\n/g, "\n");
+    }
   } catch (e) {
     throw new Error("Invalid GOOGLE_SERVICE_ACCOUNT_JSON format");
   }
