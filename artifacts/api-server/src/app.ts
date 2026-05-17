@@ -31,6 +31,7 @@ app.use(
       'http://localhost:3000',
       'http://localhost:5173',
       'https://wisesa-nirani.vercel.app',
+      'https://reasonable-perception-production.up.railway.app',
     ],
     credentials: true,
   }),
