@@ -40,8 +40,20 @@ export const LiveAlbum: React.FC = () => {
             if (res.ok) {
                 const data: Photo[] = await res.json();
                 setPhotos(data);
-                // Always shuffle fresh — random order, never by date
-                setShuffled(shuffle(data));
+                setShuffled(prev => {
+                    if (prev.length === 0) return shuffle(data); // first load: shuffle
+                    // New photos arrived: append only the new ones at random positions
+                    const existingIds = new Set(prev.map(p => p._id));
+                    const newPhotos = data.filter(p => !existingIds.has(p._id));
+                    if (newPhotos.length === 0) return prev; // nothing new, keep order
+                    // Insert new photos at random spots
+                    const combined = [...prev];
+                    for (const np of newPhotos) {
+                        const pos = Math.floor(Math.random() * (combined.length + 1));
+                        combined.splice(pos, 0, np);
+                    }
+                    return combined;
+                });
             }
         } catch { /* silent */ }
         finally { setLoading(false); }
@@ -239,9 +251,16 @@ export const LiveAlbum: React.FC = () => {
                                         className="w-full h-auto block group-hover:scale-[1.04] transition-transform duration-700"
                                         loading="lazy"
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3 pointer-events-none">
+                                    {/* Timestamp — always visible, bottom-right */}
+                                    <div className="absolute bottom-0 right-0 left-0 bg-gradient-to-t from-black/60 to-transparent p-2 pointer-events-none">
+                                        <p className="text-white/50 text-[10px] text-right leading-tight">
+                                            {new Date(p.createdAt).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                    {/* Guest name on hover */}
+                                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-start p-3 pointer-events-none">
                                         {p.guestId && p.guestId !== 'anonymous' && (
-                                            <p className="text-white/80 text-xs font-medium truncate">{p.guestId}</p>
+                                            <p className="text-white/90 text-xs font-medium truncate bg-black/40 rounded px-1.5 py-0.5">{p.guestId}</p>
                                         )}
                                     </div>
                                 </div>
