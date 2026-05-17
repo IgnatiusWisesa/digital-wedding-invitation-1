@@ -115,8 +115,8 @@ export const LiveAlbum: React.FC = () => {
                     style={{ fontFamily: '"Great Vibes", cursive' }}>
                     Live Memories
                 </h1>
-                <p className="text-gray-400 uppercase tracking-[0.3em] text-xs md:text-sm mb-6">
-                    Momen yang Diabadikan oleh Tamu
+                <p className="text-gray-500 tracking-widest text-[10px] md:text-xs mb-6 italic">
+                    setiap jepretan, sebuah kenangan abadi
                 </p>
 
                 {/* View toggle */}
