@@ -8,9 +8,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY lib/ ./lib/
 COPY artifacts/api-server/ ./artifacts/api-server/
 
-ENV PNPM_BUILD_POLICY=allow
-ENV CI=false
-
+RUN pnpm config set dangerouslyAllowAllBuilds true
 RUN pnpm install --no-frozen-lockfile
 
 RUN pnpm --filter @workspace/api-server run build
