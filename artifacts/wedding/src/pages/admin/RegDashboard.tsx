@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import QRCode from 'react-qr-code';
 import { getApiUrl } from '../../config/api';
@@ -119,34 +118,13 @@ export const RegDashboard = () => {
 
     const handleExport = async () => {
         try {
-            const res = await axios.get(`${getApiUrl()}/api/admin/guests`, {
+            const response = await axios.get(`${getApiUrl()}/api/admin/guests/export`, {
                 ...axiosConfig,
-                params: { page: 1, limit: 1000, desk: deskId },
+                params: { desk: deskId },
+                responseType: 'blob',
             });
-            const all: Guest[] = res.data.guests || [];
-            if (all.length === 0) { alert('Tidak ada data tamu'); return; }
-            const rows = all.map((g) => ({
-                'Nama': g.name || '-',
-                'Status': g.attendanceStatus || '-',
-                'Acara': g.attendanceChoice || '-',
-                'Tamu (RSVP)': g.guestCount || 1,
-                'Tamu Real (Hari H)': g.guestCountReal ?? '-',
-                'Angpau': g.angpauOption === 'kado' ? `Kado #${g.stickerNumber || '?'}` : g.angpauOption === 'transfer' ? 'Transfer' : 'Tanpa',
-                'No. Stiker': g.stickerNumber || '-',
-                'Wishes / Pesan': g.note || '-',
-                'Catatan Admin': g.adminNote || '-',
-                'Check-in': g.isCheckedIn ? 'Ya' : 'Tidak',
-                'Meja Check-in': g.checkInDesk || '-',
-                'Metode Check-in': g.checkInMethod || '-',
-                'Waktu Check-in': g.checkedInAt ? new Date(g.checkedInAt).toLocaleString('id-ID') : '-',
-                'Waktu RSVP': g.createdAt ? new Date(g.createdAt).toLocaleString('id-ID') : '-',
-            }));
-            const ws = XLSX.utils.json_to_sheet(rows);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Tamu');
             saveAs(
-                new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })],
-                    { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+                new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
                 `tamu-${deskId}-${new Date().toISOString().split('T')[0]}.xlsx`
             );
         } catch { alert('Gagal export data'); }
