@@ -91,6 +91,7 @@ export const AdminLogin = () => {
             <div className="w-full max-w-md">
                 <div className="bg-night-800/50 backdrop-blur-sm border border-accent-green/30 rounded-xl p-8 shadow-2xl">
                     <div className="text-center mb-8">
+                        <img src="/logo-new.png" alt="Logo" className="w-20 h-20 object-contain mx-auto mb-3 drop-shadow-[0_0_10px_rgba(245,168,35,0.3)]" />
                         <h1 className="text-3xl font-serif text-accent-yellow mb-2">Admin Dashboard</h1>
                         <p className="text-white/60">Wedding Invitation Management</p>
                     </div>

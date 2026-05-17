@@ -50,7 +50,7 @@ export const ChooseDashboard = () => {
         <div className="min-h-screen bg-night flex flex-col items-center justify-center p-6">
             <div className="w-full max-w-lg">
                 <div className="text-center mb-10">
-                    <div className="text-5xl mb-4">💒</div>
+                    <img src="/logo-new.png" alt="Logo" className="w-24 h-24 object-contain mx-auto mb-3 drop-shadow-[0_0_10px_rgba(245,168,35,0.3)]" />
                     <h1 className="text-3xl font-serif text-accent-yellow mb-2">Wisesa & Nirani</h1>
                     <p className="text-white/50 text-sm">Selamat datang, <span className="text-white/80">{username}</span></p>
                 </div>
