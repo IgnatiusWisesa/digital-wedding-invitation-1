@@ -9,7 +9,6 @@ COPY lib/ ./lib/
 COPY artifacts/api-server/ ./artifacts/api-server/
 
 RUN pnpm install --frozen-lockfile
-
 RUN pnpm --filter @workspace/api-server run build
 
 FROM node:22-alpine
@@ -18,7 +17,7 @@ WORKDIR /app
 
 COPY --from=builder /app/artifacts/api-server/dist ./dist
 
-EXPOSE 3000
+EXPOSE 3001
 
 ENV NODE_ENV=production
 
