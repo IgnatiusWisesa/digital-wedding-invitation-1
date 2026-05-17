@@ -2,5 +2,11 @@
   "installCommand": "npm install -g pnpm && pnpm install",
   "buildCommand": "pnpm --filter @workspace/wedding run build",
   "outputDirectory": "artifacts/wedding/dist/public",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://1832d152-97d3-4cc7-8063-81edd025d141-00-113zshju2e15p.worf.replit.dev/api-server/api/:path*"
+    }
+  ]
 }
