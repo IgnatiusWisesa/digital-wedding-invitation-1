@@ -3,12 +3,12 @@ import { Section } from './Section';
 
 export const Gallery = () => {
     const photos = [
-        { url: "/gallery/photo1.png", caption: "Our Journey Begins" },
-        { url: "/gallery/photo2.png", caption: "Under the Lanterns" },
-        { url: "/gallery/photo3.png", caption: "Moments of Joy" },
-        { url: "/gallery/photo4.png", caption: "Dancing in Twilight" },
-        { url: "/gallery/photo5.png", caption: "Forever Together" },
-        { url: "/gallery/photo6.png", caption: "Love & Laughter" },
+        { url: "/gallery/photo1.jpg", caption: "Our Journey Begins" },
+        { url: "/gallery/photo2.jpg", caption: "Under the Lanterns" },
+        { url: "/gallery/photo3.jpg", caption: "Moments of Joy" },
+        { url: "/gallery/photo4.jpg", caption: "Dancing in Twilight" },
+        { url: "/gallery/photo5.jpg", caption: "Forever Together" },
+        { url: "/gallery/photo6.jpg", caption: "Love & Laughter" },
     ];
 
     return (
