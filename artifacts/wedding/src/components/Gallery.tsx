@@ -5,10 +5,10 @@ export const Gallery = () => {
     const photos = [
         { url: "/gallery/photo1.jpg", caption: "Our Journey Begins" },
         { url: "/gallery/photo2.jpg", caption: "Under the Lanterns" },
-        { url: "/gallery/photo3.jpg", caption: "Moments of Joy" },
-        { url: "/gallery/photo4.jpg", caption: "Dancing in Twilight" },
-        { url: "/gallery/photo5.jpg", caption: "Forever Together" },
         { url: "/gallery/photo6.jpg", caption: "Love & Laughter" },
+        { url: "/gallery/photo4.jpg", caption: "Dancing in Twilight" },
+        { url: "/gallery/photo3.jpg", caption: "Moments of Joy" },
+        { url: "/gallery/photo5.jpg", caption: "Forever Together" },
     ];
 
     return (
