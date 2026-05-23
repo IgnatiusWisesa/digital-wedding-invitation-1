@@ -53,7 +53,7 @@ export const DressCode = () => {
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-12">
                 <div className="w-20 h-px bg-gradient-to-r from-transparent to-orange-500/30"></div>
-                <div className="flex items-center justify-center" style={{ width: "72px", height: "72px" }}>
+                <div className="flex items-center justify-center" style={{ width: "100px", height: "100px" }}>
                     <img
                         src="/asset/moon.png"
                         alt="moon"
