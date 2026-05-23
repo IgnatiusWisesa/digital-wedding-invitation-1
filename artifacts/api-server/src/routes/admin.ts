@@ -388,6 +388,53 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/admin/reset — delete all RSVPs, photos, and optionally invites
+router.post("/admin/reset", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
+    await connectDB();
+
+    const { target } = req.body as { target: "rsvp" | "photos" | "invites" | "all" };
+    if (!target) return res.status(400).json({ error: "target required: rsvp | photos | invites | all" });
+
+    const { PhotoModel } = await import("./photos");
+    const { InviteModel } = await import("./sheets");
+
+    const result: Record<string, number> = {};
+
+    if (target === "rsvp" || target === "all") {
+      const r = await RsvpModel.deleteMany({});
+      result.rsvps = r.deletedCount;
+    }
+    if (target === "photos" || target === "all") {
+      // Also delete from Cloudinary if configured
+      const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+      const API_KEY = process.env.CLOUDINARY_API_KEY;
+      const API_SECRET = process.env.CLOUDINARY_API_SECRET;
+      if (CLOUD_NAME && API_KEY && API_SECRET) {
+        try {
+          const { v2: cloudinary } = await import("cloudinary");
+          cloudinary.config({ cloud_name: CLOUD_NAME, api_key: API_KEY, api_secret: API_SECRET });
+          const photos = await PhotoModel.find({ public_id: { $exists: true, $ne: null } });
+          const ids = photos.map((p: any) => p.public_id).filter(Boolean);
+          if (ids.length > 0) await cloudinary.api.delete_resources(ids);
+        } catch { /* ignore */ }
+      }
+      const r = await PhotoModel.deleteMany({});
+      result.photos = r.deletedCount;
+    }
+    if (target === "invites" || target === "all") {
+      const r = await InviteModel.deleteMany({});
+      result.invites = r.deletedCount;
+    }
+
+    return res.json({ success: true, deleted: result });
+  } catch (err) {
+    req.log.error({ err }, "Reset error");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // GET /api/admin/app-settings — fetch all settings (key/value pairs)
 router.get("/admin/app-settings", authMiddleware, async (req, res) => {
   try {
