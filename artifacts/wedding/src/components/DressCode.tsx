@@ -43,8 +43,8 @@ export const DressCode = () => {
                     <div className="w-16 h-px bg-white/20 mx-auto mb-6" />
 
                     {/* Avoid note */}
-                    <div className="inline-flex items-center gap-2 bg-red-900/20 border border-red-400/20 rounded-full px-5 py-2">
-                        <span className="text-red-300/80 text-sm font-light">
+                    <div className="inline-flex items-center gap-2 bg-white/5 border border-white/20 rounded-full px-5 py-2">
+                        <span className="text-white/60 text-sm font-light">
                             Kindly avoid <span className="font-medium">pure white</span> and overly <span className="font-medium">bright / neon</span> colors
                         </span>
                     </div>
