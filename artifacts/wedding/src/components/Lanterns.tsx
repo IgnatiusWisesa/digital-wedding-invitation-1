@@ -9,7 +9,7 @@ export const Lanterns = () => {
 
   // Responsive: fewer and smaller lanterns on mobile
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const lanternCount = isMobile ? 15 : 25; // 15 on mobile, 25 on desktop
+  const lanternCount = isMobile ? 8 : 15; // 8 on mobile, 15 on desktop
   const sizeMultiplier = isMobile ? 800 : 1200; // Smaller on mobile (40-80px vs 60-120px)
 
   // Generate lanterns with random properties including rotation and depth
