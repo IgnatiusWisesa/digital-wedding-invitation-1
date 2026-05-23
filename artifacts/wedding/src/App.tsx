@@ -10,6 +10,7 @@ import { Gallery } from './components/Gallery'
 import { Section } from './components/Section'
 import { GiftSection } from './components/GiftSection'
 import { WishesList } from './components/WishesList'
+import { DressCode } from './components/DressCode'
 import { weddingConfig } from './config/wedding'
 import { useInvite } from './context/InviteContext'
 
@@ -153,6 +154,7 @@ function App() {
 
             <Couple />
             <Events />
+            <DressCode />
             <Gallery />
             <GiftSection />
 
