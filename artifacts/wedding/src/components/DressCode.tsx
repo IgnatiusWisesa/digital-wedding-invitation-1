@@ -5,7 +5,6 @@ const colors = [
     { name: 'Beige',        hex: '#C8B89A' },
     { name: 'Champagne',    hex: '#E8D5B0' },
     { name: 'Cream',        hex: '#EDE0C8' },
-    { name: 'Soft Yellow',  hex: '#E8D98A' },
     { name: 'Brown',        hex: '#8B6347' },
     { name: 'Dusty Blue',   hex: '#8FA8BE' },
     { name: 'Neutral',      hex: '#B0A898' },
