@@ -1,11 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Section } from './Section';
 import { weddingConfig } from '../config/wedding';
 import { useInvite } from '../context/InviteContext';
+import { getApiUrl } from '../config/api';
 
 export const Events = () => {
     const invite = useInvite();
     const event = invite?.event ?? 'Keduanya';
+    const [streamingUrl, setStreamingUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        const API_URL = getApiUrl();
+        fetch(`${API_URL}/api/public/streaming-link`)
+            .then(r => r.ok ? r.json() : null)
+            .then(d => { if (d?.url) setStreamingUrl(d.url); })
+            .catch(() => {});
+    }, []);
 
     const showGereja  = event === 'Keduanya' || event === 'Gereja';
     const showResepsi = event === 'Keduanya' || event === 'Resepsi';
@@ -38,14 +48,26 @@ export const Events = () => {
                             <p className="font-medium">{weddingConfig.ceremony.venue}</p>
                             <p className="text-sm">{weddingConfig.ceremony.address}</p>
                         </div>
-                        <a
-                            href={weddingConfig.ceremony.mapLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 border-2 border-white/50 text-white px-6 py-2 rounded-full hover:bg-white hover:text-garden-dark transition-all duration-300 text-sm uppercase tracking-wider font-medium"
-                        >
-                            <span>📍</span> View Map
-                        </a>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <a
+                                href={weddingConfig.ceremony.mapLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 border-2 border-white/50 text-white px-6 py-2 rounded-full hover:bg-white hover:text-garden-dark transition-all duration-300 text-sm uppercase tracking-wider font-medium"
+                            >
+                                <span>📍</span> View Map
+                            </a>
+                            {streamingUrl && (
+                                <a
+                                    href={streamingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 border-2 border-red-400/70 text-red-300 px-6 py-2 rounded-full hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 text-sm uppercase tracking-wider font-medium animate-pulse"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-red-400 inline-block"></span> Live Streaming
+                                </a>
+                            )}
+                        </div>
                     </div>
                 )}
 
