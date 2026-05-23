@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const Stars = () => {
-    // Generate 50 stars with random properties
-    const stars = Array.from({ length: 50 }, (_, i) => ({
+    // Generate 30 stars with random properties
+    const stars = Array.from({ length: 30 }, (_, i) => ({
         id: i,
         left: Math.random() * 100,
         top: Math.random() * 100,
