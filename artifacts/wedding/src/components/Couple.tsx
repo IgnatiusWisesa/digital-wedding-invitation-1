@@ -16,7 +16,7 @@ export const Couple = () => {
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-accent-yellow/20 rounded-full blur-3xl group-hover:bg-accent-yellow/30 transition-all duration-500"></div>
                         <div className="relative w-56 h-56 mx-auto rounded-full border-4 border-accent-yellow/40 overflow-hidden shadow-[0_0_40px_rgba(255,215,0,0.3)] group-hover:border-accent-yellow group-hover:shadow-[0_0_60px_rgba(255,215,0,0.5)] transition-all duration-500">
-                            <img src="/couple/groom.png" alt="Groom" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            <img src="/couple/groom.jpg" alt="Groom" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         </div>
                     </div>
                     <h3 className="text-3xl font-serif text-white mb-2" style={{ fontFamily: '"Playfair Display", serif' }}>{weddingConfig.couple.groom.fullname}</h3>
@@ -29,7 +29,7 @@ export const Couple = () => {
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-accent-yellow/20 rounded-full blur-3xl group-hover:bg-accent-yellow/30 transition-all duration-500"></div>
                         <div className="relative w-56 h-56 mx-auto rounded-full border-4 border-accent-yellow/40 overflow-hidden shadow-[0_0_40px_rgba(255,215,0,0.3)] group-hover:border-accent-yellow group-hover:shadow-[0_0_60px_rgba(255,215,0,0.5)] transition-all duration-500">
-                            <img src="/couple/bride.png" alt="Bride" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            <img src="/couple/bride.jpg" alt="Bride" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                         </div>
                     </div>
                     <h3 className="text-3xl font-serif text-white mb-2" style={{ fontFamily: '"Playfair Display", serif' }}>{weddingConfig.couple.bride.fullname}</h3>
