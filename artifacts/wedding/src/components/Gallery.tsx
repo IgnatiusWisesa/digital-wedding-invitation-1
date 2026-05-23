@@ -43,12 +43,12 @@ export const Gallery = () => {
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-12">
                 <div className="w-20 h-px bg-gradient-to-r from-transparent to-orange-500/30"></div>
-                <div className="overflow-hidden relative" style={{ width: '72px', height: '72px' }}>
+                <div className="flex items-center justify-center" style={{ width: "72px", height: "72px" }}>
                     <img
-                        src="/asset/section_lantern.png"
-                        alt="lantern"
-                        className="absolute left-1/2 -translate-x-1/2 object-cover"
-                        style={{ top: '-12px', width: '104px', height: '104px' }}
+                        src="/asset/moon.png"
+                        alt="moon"
+                        className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(255,200,80,0.6)]"
+                        
                     />
                 </div>
                 <div className="w-20 h-px bg-gradient-to-l from-transparent to-orange-500/30"></div>
