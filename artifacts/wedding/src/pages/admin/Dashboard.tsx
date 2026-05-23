@@ -67,6 +67,10 @@ export const AdminDashboard = () => {
     const [photos, setPhotos] = useState<any[]>([]);
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
+    const [showStreamingModal, setShowStreamingModal] = useState(false);
+    const [streamingUrl, setStreamingUrl] = useState('');
+    const [streamingLoading, setStreamingLoading] = useState(false);
+    const [streamingCurrent, setStreamingCurrent] = useState<string | null>(null);
     const [formData, setFormData] = useState({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined as number | undefined, angpauOption: 'tanpa', isCheckedIn: false });
     const username = localStorage.getItem('admin_username');
 
@@ -81,6 +85,7 @@ export const AdminDashboard = () => {
         if (token) {
             fetchStats();
             fetchGuests();
+            fetchStreamingUrl();
         }
     }, [page, search, token]);
 
@@ -96,6 +101,29 @@ export const AdminDashboard = () => {
             }
         };
     }, [showScanner]);
+
+    const fetchStreamingUrl = async () => {
+        try {
+            const API_URL = getApiUrl();
+            const r = await axios.get(`${API_URL}/api/admin/app-settings`, axiosConfig);
+            setStreamingCurrent(r.data?.streaming_link || null);
+            setStreamingUrl(r.data?.streaming_link || '');
+        } catch {}
+    };
+
+    const handleSaveStreamingUrl = async () => {
+        setStreamingLoading(true);
+        try {
+            const API_URL = getApiUrl();
+            await axios.post(`${API_URL}/api/admin/app-settings`, { key: 'streaming_link', value: streamingUrl.trim() }, axiosConfig);
+            setStreamingCurrent(streamingUrl.trim() || null);
+            setShowStreamingModal(false);
+        } catch {
+            alert('Gagal menyimpan link streaming.');
+        } finally {
+            setStreamingLoading(false);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -439,6 +467,13 @@ export const AdminDashboard = () => {
                         className="bg-accent-green hover:bg-accent-green-dark text-night-900 px-6 py-2 rounded font-medium transition-all"
                     >
                         📊 Export Excel
+                    </button>
+                    <button
+                        onClick={() => setShowStreamingModal(true)}
+                        className="bg-red-900/40 hover:bg-red-800/60 text-red-300 border border-red-400/40 px-6 py-2 rounded font-medium transition-all flex items-center gap-2"
+                    >
+                        <span className={`w-2 h-2 rounded-full inline-block ${streamingCurrent ? 'bg-red-400 animate-pulse' : 'bg-white/30'}`}></span>
+                        Live Streaming
                     </button>
                     <button
                         onClick={() => setShowResetModal(true)}
@@ -1042,6 +1077,46 @@ export const AdminDashboard = () => {
                                 </div>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Streaming Link Modal */}
+            {showStreamingModal && (
+                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                    <div className="bg-night-800 border border-red-400/30 rounded-xl p-6 max-w-md w-full">
+                        <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full inline-block ${streamingCurrent ? 'bg-red-400 animate-pulse' : 'bg-white/30'}`}></span>
+                            Link Live Streaming
+                        </h3>
+                        <p className="text-white/50 text-sm mb-4">Link akan muncul sebagai tombol "Live Streaming" di halaman acara gereja. Kosongkan untuk menyembunyikan tombol.</p>
+                        {streamingCurrent && (
+                            <div className="mb-3 text-xs text-white/40 break-all">
+                                Saat ini: <span className="text-accent-yellow">{streamingCurrent}</span>
+                            </div>
+                        )}
+                        <input
+                            type="url"
+                            placeholder="https://youtube.com/live/..."
+                            value={streamingUrl}
+                            onChange={e => setStreamingUrl(e.target.value)}
+                            className="w-full bg-night-900 border border-white/20 text-white rounded px-3 py-2 text-sm mb-4 focus:outline-none focus:border-red-400"
+                        />
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowStreamingModal(false)}
+                                className="text-white/50 hover:text-white px-4 py-2 transition-colors text-sm"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={handleSaveStreamingUrl}
+                                disabled={streamingLoading}
+                                className="bg-red-600 hover:bg-red-500 text-white px-5 py-2 rounded font-medium text-sm transition-all disabled:opacity-50"
+                            >
+                                {streamingLoading ? '⏳ Menyimpan...' : '💾 Simpan'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
