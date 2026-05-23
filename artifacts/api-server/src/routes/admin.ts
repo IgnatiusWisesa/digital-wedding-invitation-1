@@ -435,6 +435,18 @@ router.post("/admin/reset", authMiddleware, async (req, res) => {
   }
 });
 
+// GET /api/public/streaming-link — public endpoint, no auth required
+router.get("/public/streaming-link", async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.json({ url: null });
+    await connectDB();
+    const setting = await AppSettingsModel.findOne({ key: "streaming_link" });
+    return res.json({ url: setting ? setting.value : null });
+  } catch (err) {
+    return res.json({ url: null });
+  }
+});
+
 // GET /api/admin/app-settings — fetch all settings (key/value pairs)
 router.get("/admin/app-settings", authMiddleware, async (req, res) => {
   try {
