@@ -167,7 +167,7 @@ function App() {
 
             <footer className="relative z-10 text-center py-8 mt-20 border-t border-accent-brown/20">
                 <p className="text-gray-600 text-xs">
-                    Made with love by {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname} © 2025
+                    Made with love by {weddingConfig.couple.groom.nickname} & {weddingConfig.couple.bride.nickname} © 2026
                 </p>
             </footer>
         </div>
