@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Section } from './Section';
 
 const wearColors = [
@@ -18,6 +18,8 @@ const avoidColors = [
 ];
 
 export const DressCode = () => {
+    const [showDetail, setShowDetail] = useState(false);
+
     return (
         <Section className="text-center relative">
             <div className="mb-10">
@@ -87,7 +89,40 @@ export const DressCode = () => {
 
                     </div>
                 </div>
+
+                {/* View detail button */}
+                <div className="mt-5">
+                    <button
+                        onClick={() => setShowDetail(true)}
+                        className="inline-flex items-center gap-2 text-white/50 hover:text-white/80 text-sm font-light border border-white/15 hover:border-white/30 rounded-full px-5 py-2 transition-all duration-300"
+                    >
+                        <span>🔍</span> Lihat panduan lengkap
+                    </button>
+                </div>
             </div>
+
+            {/* Lightbox modal */}
+            {showDetail && (
+                <div
+                    className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4"
+                    onClick={() => setShowDetail(false)}
+                >
+                    <div className="relative max-w-lg w-full max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowDetail(false)}
+                            className="absolute -top-10 right-0 text-white/60 hover:text-white text-sm flex items-center gap-1 transition-colors"
+                        >
+                            ✕ Tutup
+                        </button>
+                        <img
+                            src="/asset/dresscode-detail.jpg"
+                            alt="Dress Code Detail"
+                            className="w-full h-auto rounded-xl shadow-2xl overflow-y-auto"
+                            style={{ maxHeight: '85vh', objectFit: 'contain' }}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Decorative divider */}
             <div className="flex items-center justify-center gap-4 pt-12">
