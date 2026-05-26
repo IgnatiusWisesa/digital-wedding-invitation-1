@@ -32,8 +32,10 @@ export const Gallery = () => {
                                 alt={photo.caption}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
-                                <p className="text-white font-light text-sm tracking-wide">{photo.caption}</p>
+                            {/* Caption: always visible on touch devices, hover-only on desktop */}
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent pb-4 pt-8 flex items-end justify-center
+                                opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                                <p className="text-white font-light text-xs md:text-sm tracking-wide px-2 text-center drop-shadow">{photo.caption}</p>
                             </div>
                         </div>
                     </div>
