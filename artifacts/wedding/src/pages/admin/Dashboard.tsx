@@ -30,6 +30,7 @@ interface Stats {
     notAttending: number;
     checkedIn: number;
     totalGuestCount?: number;
+    totalInvited?: number;
     byEvent?: {
         gereja: number;
         resepsi: number;
@@ -381,10 +382,10 @@ export const AdminDashboard = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-night-800/50 border border-accent-green/30 rounded-lg p-6">
-                    <div className="text-white/60 text-sm mb-2">Total RSVPs</div>
-                    <div className="text-3xl font-bold text-accent-yellow">{stats.total}</div>
+                    <div className="text-white/60 text-sm mb-2">Total Undangan</div>
+                    <div className="text-3xl font-bold text-accent-yellow">{stats.totalInvited ?? 0}</div>
                 </div>
                 <div className="bg-night-800/50 border border-accent-green/30 rounded-lg p-6">
                     <div className="text-white/60 text-sm mb-2">Attending</div>
@@ -528,8 +529,11 @@ export const AdminDashboard = () => {
                                         <td className="p-4 text-white/50 text-sm font-mono">{(page - 1) * 20 + idx + 1}</td>
                                         <td className="p-4 text-white">{guest.name}</td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded text-xs ${guest.attendanceStatus === 'Hadir'
+                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                guest.attendanceStatus === 'Hadir'
                                                 ? 'bg-green-500/20 text-green-300'
+                                                : guest.attendanceStatus === 'Belum RSVP'
+                                                ? 'bg-yellow-500/20 text-yellow-300'
                                                 : 'bg-red-500/20 text-red-300'
                                                 }`}>
                                                 {guest.attendanceStatus}
