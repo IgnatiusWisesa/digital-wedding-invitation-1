@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import mongoose, { Schema, Document } from "mongoose";
 import { RsvpModel } from "./rsvp";
+import { InviteModel } from "./sheets";
 import { logger } from "../lib/logger";
 import { connectDB, getMongoUri } from "../lib/db";
 
@@ -94,7 +95,7 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
       });
     }
 
-    const [total, attending, notAttending, checkedIn, guestCountAgg, byEvent] = await Promise.all([
+    const [total, attending, notAttending, checkedIn, guestCountAgg, byEvent, totalInvited] = await Promise.all([
       RsvpModel.countDocuments(),
       RsvpModel.countDocuments({ attendanceStatus: "Hadir" }),
       RsvpModel.countDocuments({ attendanceStatus: "Tidak" }),
@@ -107,6 +108,7 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
         { $match: { attendanceStatus: "Hadir" } },
         { $group: { _id: { $toLower: "$attendanceChoice" }, count: { $sum: { $ifNull: ["$guestCount", 1] } } } },
       ]),
+      InviteModel.countDocuments(),
     ]);
 
     const totalGuestCount = guestCountAgg[0]?.total || 0;
@@ -121,6 +123,7 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
       notAttending,
       checkedIn,
       totalGuestCount,
+      totalInvited,
       byEvent: {
         gereja: byEventMap["gereja"] || 0,
         resepsi: byEventMap["resepsi"] || 0,
@@ -195,26 +198,45 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
-    const search = req.query.search as string;
+    const search = (req.query.search as string) || "";
     const skip = (page - 1) * limit;
-
     const desk = req.query.desk as string | undefined;
 
-    const query: Record<string, unknown> = {};
-    if (search) {
-      query.name = { $regex: search, $options: "i" };
-    }
+    // Desk view: only show checked-in RSVPs (unchanged behaviour)
     if (desk) {
-      query.checkInDesk = desk;
-      query.isCheckedIn = true;
+      const query: Record<string, unknown> = { checkInDesk: desk, isCheckedIn: true };
+      if (search) query.name = { $regex: search, $options: "i" };
+      const [guests, total] = await Promise.all([
+        RsvpModel.find(query).skip(skip).limit(limit).sort({ checkedInAt: -1, createdAt: -1 }),
+        RsvpModel.countDocuments(query),
+      ]);
+      const guestsWithTokens = guests.map((g) => {
+        let ticketToken = null;
+        if (g.ticketCode && g.attendanceStatus === "Hadir") {
+          ticketToken = signTicketToken(g.ticketCode, g.name);
+        }
+        return { ...g.toObject(), ticketToken };
+      });
+      return res.json({
+        guests: guestsWithTokens,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
     }
 
-    const [guests, total] = await Promise.all([
-      RsvpModel.find(query).skip(skip).limit(limit).sort({ checkedInAt: -1, createdAt: -1 }),
-      RsvpModel.countDocuments(query),
+    // Normal view: merge RSVPs + pending invites (guests who haven't RSVPed yet)
+    const searchRegex = search ? { $regex: search, $options: "i" } : undefined;
+    const rsvpQuery: Record<string, unknown> = searchRegex ? { name: searchRegex } : {};
+    const inviteQuery: Record<string, unknown> = searchRegex ? { name: searchRegex } : {};
+
+    const [allRsvps, allInvites] = await Promise.all([
+      RsvpModel.find(rsvpQuery).sort({ checkedInAt: -1, createdAt: -1 }),
+      InviteModel.find(inviteQuery).sort({ createdAt: -1 }),
     ]);
 
-    const guestsWithTokens = guests.map((g) => {
+    // Build set of normalized names that have already RSVPed
+    const rsvpNames = new Set(allRsvps.map((r) => r.normalizedName));
+
+    const rsvpGuests = allRsvps.map((g) => {
       let ticketToken = null;
       if (g.ticketCode && g.attendanceStatus === "Hadir") {
         ticketToken = signTicketToken(g.ticketCode, g.name);
@@ -222,14 +244,32 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
       return { ...g.toObject(), ticketToken };
     });
 
+    // Pending invites: in InviteModel but no matching RSVP yet
+    const pendingGuests = allInvites
+      .filter((inv) => !rsvpNames.has(inv.name.trim().toLowerCase()))
+      .map((inv) => ({
+        _id: inv._id,
+        name: inv.name,
+        attendanceStatus: "Belum RSVP",
+        attendanceChoice: inv.event,
+        guestCount: inv.quota,
+        guestQuota: inv.quota,
+        adminNote: inv.note || "",
+        note: "",
+        angpauOption: "tanpa",
+        isCheckedIn: false,
+        ticketToken: null,
+        createdAt: inv.createdAt,
+        inviteCode: inv.code,
+      }));
+
+    const allGuests = [...rsvpGuests, ...pendingGuests];
+    const total = allGuests.length;
+    const paginated = allGuests.slice(skip, skip + limit);
+
     return res.json({
-      guests: guestsWithTokens,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      guests: paginated,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (err) {
     req.log.error({ err }, "Get guests error");
