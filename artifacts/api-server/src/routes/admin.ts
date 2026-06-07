@@ -316,9 +316,37 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
       message: "Guest created successfully",
       guest: { ...newRsvp.toObject(), ticketToken },
     });
-  } catch (err) {
+  } catch (err: any) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Tamu dengan nama ini sudah terdaftar. Cari namanya di daftar tamu untuk mengedit." });
+    }
     req.log.error({ err }, "Create guest error");
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// GET /api/admin/invites/search?q=xxx — autocomplete from InviteModel (master data)
+router.get("/admin/invites/search", authMiddleware, async (req, res) => {
+  try {
+    if (!MONGODB_URI) return res.json([]);
+    await connectDB();
+    const q = ((req.query.q as string) || "").trim();
+    if (!q) return res.json([]);
+    const invites = await InviteModel.find({ name: { $regex: q, $options: "i" } })
+      .limit(10)
+      .lean();
+    return res.json(
+      invites.map((inv) => ({
+        name: inv.name,
+        quota: inv.quota,
+        event: inv.event,
+        note: inv.note,
+        code: inv.code,
+      }))
+    );
+  } catch (err) {
+    req.log.error({ err }, "Invite search error");
+    return res.json([]);
   }
 });
 
