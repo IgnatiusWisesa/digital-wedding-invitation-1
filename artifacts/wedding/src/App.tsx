@@ -57,7 +57,7 @@ function App() {
     return (
         <div className={`min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-cream font-sans selection:bg-orange-500 selection:text-white pb-20 ${showSplash ? 'h-screen overflow-hidden' : ''}`}>
             {showSplash && (
-                <div className="fixed inset-0 z-[100] bg-gradient-to-b from-gray-900 via-gray-950 to-black flex items-center justify-center">
+                <div className="fixed inset-0 z-[100] bg-gradient-to-b from-gray-900 via-gray-950 to-black flex items-center justify-center overflow-y-auto">
                     {/* Full-screen star field */}
                     {splashStars.map(star => (
                         <span
