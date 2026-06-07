@@ -355,7 +355,7 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
 
     const { id } = req.params;
-    const { attendanceStatus, attendanceChoice, isCheckedIn, note, adminNote, guestCount, guestCountReal, angpauOption } = req.body;
+    const { attendanceStatus, attendanceChoice, isCheckedIn, note, adminNote, guestCount, guestCountReal, angpauOption, checkInDesk } = req.body;
     const user = (req as any).user;
 
     await connectDB();
@@ -389,6 +389,7 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
         guest.checkedInAt = new Date();
         guest.checkedInBy = user?.username;
         guest.checkInMethod = "manual";
+        if (checkInDesk) (guest as any).checkInDesk = checkInDesk;
       }
     }
 
