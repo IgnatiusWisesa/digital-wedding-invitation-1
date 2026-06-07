@@ -76,7 +76,10 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
       const isGerejaDesk = desk === "master";
       const deskFilter = isGerejaDesk
         ? { checkInGereja: true }
-        : { checkInResepsi: true };
+        : { $or: [
+            { checkInResepsi: true, checkInResepsiDesk: desk },
+            { checkInResepsi: { $ne: true }, checkInDesk: desk, isCheckedIn: true },
+          ] };
       const [checkedIn, byEventAgg, totalAttending] = await Promise.all([
         RsvpModel.countDocuments(deskFilter),
         RsvpModel.aggregate([
@@ -210,7 +213,10 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
       const isGerejaDesk = desk === "master";
       const query: Record<string, unknown> = isGerejaDesk
         ? { checkInGereja: true }
-        : { checkInResepsi: true };
+        : { $or: [
+            { checkInResepsi: true, checkInResepsiDesk: desk },
+            { checkInResepsi: { $ne: true }, checkInDesk: desk, isCheckedIn: true },
+          ] } as any;
       if (search) query.name = { $regex: search, $options: "i" };
       const [guests, total] = await Promise.all([
         RsvpModel.find(query).skip(skip).limit(limit).sort({ checkedInAt: -1, createdAt: -1 }),
@@ -487,8 +493,10 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
     if (isGerejaDesk && (guest as any).checkInGereja) {
       return res.json({ success: false, message: "Tamu sudah check-in di Gereja", guest: guest.toObject() });
     }
-    if (!isGerejaDesk && (guest as any).checkInResepsi) {
-      const prevDesk = (guest as any).checkInResepsiDesk || "meja resepsi";
+    const alreadyResepsi = (guest as any).checkInResepsi
+      || (!isGerejaDesk && (guest as any).checkInDesk && (guest as any).checkInDesk !== "master" && guest.isCheckedIn);
+    if (!isGerejaDesk && alreadyResepsi) {
+      const prevDesk = (guest as any).checkInResepsiDesk || (guest as any).checkInDesk || "meja resepsi";
       return res.json({ success: false, message: `Tamu sudah check-in di Resepsi (${prevDesk})`, guest: guest.toObject() });
     }
 
