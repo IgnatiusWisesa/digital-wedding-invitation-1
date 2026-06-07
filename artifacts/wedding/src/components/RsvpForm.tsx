@@ -53,6 +53,7 @@ export const RsvpForm: React.FC = () => {
     const [successData, setSuccessData] = useState<any>(null);
     const [existingRsvp, setExistingRsvp] = useState<any>(null);
     const [checkingExisting, setCheckingExisting] = useState(false);
+    const [editMode, setEditMode] = useState(false);
 
     // Sync name/choice if invite loads asynchronously (shouldn't happen, but safety net)
     useEffect(() => {
@@ -130,8 +131,8 @@ export const RsvpForm: React.FC = () => {
         );
     }
 
-    // Tamu sudah pernah RSVP — tampilkan status & tiket mereka
-    if (!checkingExisting && existingRsvp) {
+    // Tamu sudah pernah RSVP — tampilkan status & tiket mereka (kecuali sedang mode edit)
+    if (!checkingExisting && existingRsvp && !editMode) {
         return (
             <div className="flex flex-col items-center justify-center space-y-6 animate-fade-in">
                 <div className={`px-6 py-3 rounded-full font-bold shadow-lg ${
@@ -163,7 +164,7 @@ export const RsvpForm: React.FC = () => {
                 )}
 
                 <button
-                    onClick={() => setExistingRsvp(null)}
+                    onClick={() => setEditMode(true)}
                     className="text-cream/40 hover:text-cream/70 text-sm underline underline-offset-2 transition-colors"
                 >
                     Ubah RSVP
@@ -191,6 +192,16 @@ export const RsvpForm: React.FC = () => {
 
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto warm-card p-8 relative z-10 lantern-glow">
+            {/* Tombol kembali ke tiket saat mode edit */}
+            {editMode && existingRsvp && (
+                <button
+                    type="button"
+                    onClick={() => setEditMode(false)}
+                    className="flex items-center gap-2 text-cream/50 hover:text-cream text-sm mb-6 transition-colors"
+                >
+                    ← Kembali ke Tiket Saya
+                </button>
+            )}
             {/* Name */}
             <div className="mb-6">
                 <label className="block text-lantern-light text-base font-semibold mb-3 font-serif" htmlFor="name">
