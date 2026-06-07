@@ -282,9 +282,10 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
     await connectDB();
 
-    const { name, attendanceStatus, attendanceChoice, note, adminNote, guestCount = 1, guestCountReal, angpauOption = "tanpa" } = req.body;
+    const { name, attendanceStatus, attendanceChoice, note, adminNote, guestCount = 1, guestCountReal, angpauOption = "tanpa", isCheckedIn, checkInDesk } = req.body;
     const normalizedName = name.trim().replace(/\s+/g, " ");
     const searchName = normalizedName.toLowerCase();
+    const user = (req as any).user;
 
     const { randomUUID } = await import("crypto");
     const ticketCode = randomUUID();
@@ -295,6 +296,8 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
       const lastSticker = await RsvpModel.findOne({ stickerNumber: { $exists: true } }).sort({ stickerNumber: -1 }).select("stickerNumber");
       stickerNumber = (lastSticker?.stickerNumber ?? 0) + 1;
     }
+
+    const checkedIn = isCheckedIn === true || isCheckedIn === "true";
 
     const newRsvp = await RsvpModel.create({
       name: normalizedName,
@@ -309,6 +312,13 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
       ...(stickerNumber !== undefined ? { stickerNumber } : {}),
       ticketCode: attendanceStatus === "Hadir" ? ticketCode : undefined,
       ticketIssuedAt: attendanceStatus === "Hadir" ? new Date() : undefined,
+      ...(checkedIn ? {
+        isCheckedIn: true,
+        checkedInAt: new Date(),
+        checkedInBy: user?.username,
+        checkInMethod: "manual",
+        ...(checkInDesk ? { checkInDesk } : {}),
+      } : {}),
     });
 
     return res.status(201).json({
