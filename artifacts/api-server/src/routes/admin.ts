@@ -369,8 +369,35 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     const user = (req as any).user;
 
     await connectDB();
-    const guest = await RsvpModel.findById(id);
-    if (!guest) return res.status(404).json({ error: "Guest not found" });
+    let guest = await RsvpModel.findById(id);
+
+    // If not found in RsvpModel, check if it's a pending invite (Belum RSVP)
+    if (!guest) {
+      const invite = await InviteModel.findById(id);
+      if (!invite) return res.status(404).json({ error: "Guest not found" });
+      // Convert pending invite → new RSVP record
+      const { randomUUID } = await import("crypto");
+      const normalizedName = invite.name.trim().replace(/\s+/g, " ");
+      const newAttendanceStatus = attendanceStatus ?? "Hadir";
+      const ticketCode = newAttendanceStatus === "Hadir" ? randomUUID() : undefined;
+      guest = await RsvpModel.create({
+        name: normalizedName,
+        normalizedName: normalizedName.toLowerCase(),
+        attendanceStatus: newAttendanceStatus,
+        attendanceChoice: attendanceChoice ?? invite.event,
+        note: note ?? "",
+        adminNote: adminNote ?? invite.note ?? "",
+        guestCount: guestCount ? Math.max(1, parseInt(guestCount) || 1) : (invite.quota ?? 1),
+        angpauOption: angpauOption ?? "tanpa",
+        ticketCode,
+        ticketIssuedAt: ticketCode ? new Date() : undefined,
+      }) as any;
+      let ticketToken = null;
+      if ((guest as any).ticketCode && (guest as any).attendanceStatus === "Hadir") {
+        ticketToken = signTicketToken((guest as any).ticketCode, (guest as any).name);
+      }
+      return res.json({ success: true, guest: { ...(guest as any).toObject(), ticketToken } });
+    }
 
     if (attendanceStatus !== undefined) {
       guest.attendanceStatus = attendanceStatus;
