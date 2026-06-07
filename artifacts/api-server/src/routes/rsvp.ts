@@ -25,6 +25,11 @@ interface IRsvp extends Document {
   checkedInBy?: string;
   checkInMethod?: string;
   checkInDesk?: string;
+  checkInGereja?: boolean;
+  checkInGerejaAt?: Date;
+  checkInResepsi?: boolean;
+  checkInResepsiAt?: Date;
+  checkInResepsiDesk?: string;
   sentimentScore: number;
   guestQuota: number;
   guestCount: number;
@@ -51,6 +56,11 @@ const RsvpSchema = new Schema<IRsvp>(
     checkedInBy: { type: String },
     checkInMethod: { type: String, enum: ["qr", "manual"] },
     checkInDesk: { type: String, default: "master" },
+    checkInGereja: { type: Boolean, default: false },
+    checkInGerejaAt: { type: Date },
+    checkInResepsi: { type: Boolean, default: false },
+    checkInResepsiAt: { type: Date },
+    checkInResepsiDesk: { type: String },
     sentimentScore: { type: Number, default: 0 },
     guestQuota: { type: Number, default: 1 },
     guestCount: { type: Number, default: 1 },
