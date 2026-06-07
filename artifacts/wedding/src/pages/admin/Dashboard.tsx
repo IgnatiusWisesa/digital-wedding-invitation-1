@@ -1218,8 +1218,18 @@ export const AdminDashboard = () => {
                                 />
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={() => { if (resetPassword) setResetUnlocked(true); }}
-                                        disabled={!resetPassword}
+                                        onClick={async () => {
+                                            if (!resetPassword) return;
+                                            try {
+                                                const API_URL = getApiUrl();
+                                                await axios.post(`${API_URL}/api/admin/reset/verify`, { resetPassword }, axiosConfig);
+                                                setResetUnlocked(true);
+                                            } catch (err: any) {
+                                                alert(err.response?.data?.error || 'Password salah');
+                                                setResetPassword('');
+                                            }
+                                        }}
+                                        disabled={!resetPassword || resetLoading}
                                         className="flex-1 bg-red-600/40 hover:bg-red-600/70 text-red-200 font-bold py-2 px-4 rounded transition-all disabled:opacity-40"
                                     >
                                         Lanjut
