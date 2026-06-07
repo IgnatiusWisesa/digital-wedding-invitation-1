@@ -115,8 +115,8 @@ export const DressCode = () => {
                             ✕ Tutup
                         </button>
                         <img
-                            src="/asset/dresscode-detail.jpg"
-                            alt="Dress Code Detail"
+                            src="/asset/dresscode-guide.png"
+                            alt="Dress Code Guide"
                             className="w-full h-auto rounded-xl shadow-2xl overflow-y-auto"
                             style={{ maxHeight: '85vh', objectFit: 'contain' }}
                         />
