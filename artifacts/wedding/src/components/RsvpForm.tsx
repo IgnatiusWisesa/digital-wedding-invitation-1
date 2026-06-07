@@ -51,6 +51,8 @@ export const RsvpForm: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState<any>(null);
+    const [existingRsvp, setExistingRsvp] = useState<any>(null);
+    const [checkingExisting, setCheckingExisting] = useState(false);
 
     // Sync name/choice if invite loads asynchronously (shouldn't happen, but safety net)
     useEffect(() => {
@@ -62,6 +64,19 @@ export const RsvpForm: React.FC = () => {
             }));
         }
     }, [invite]);
+
+    // Cek apakah tamu sudah pernah RSVP sebelumnya
+    useEffect(() => {
+        if (!invite?.name) return;
+        const API_URL = getApiUrl();
+        setCheckingExisting(true);
+        axios.get(`${API_URL}/api/rsvp/lookup?name=${encodeURIComponent(invite.name)}`)
+            .then(r => {
+                if (r.data.found) setExistingRsvp(r.data.rsvp);
+            })
+            .catch(() => {})
+            .finally(() => setCheckingExisting(false));
+    }, [invite?.name]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -111,6 +126,48 @@ export const RsvpForm: React.FC = () => {
                             : 'Kami menghargai pemberitahuan Anda.'}
                     </p>
                 </div>
+            </div>
+        );
+    }
+
+    // Tamu sudah pernah RSVP — tampilkan status & tiket mereka
+    if (!checkingExisting && existingRsvp) {
+        return (
+            <div className="flex flex-col items-center justify-center space-y-6 animate-fade-in">
+                <div className={`px-6 py-3 rounded-full font-bold shadow-lg ${
+                    existingRsvp.attendanceStatus === 'Hadir'
+                        ? 'bg-gold-500 text-night'
+                        : 'bg-white/10 text-cream border border-white/20'
+                }`}>
+                    {existingRsvp.attendanceStatus === 'Hadir' ? '✓ Anda sudah RSVP' : 'RSVP Tercatat'}
+                </div>
+
+                {existingRsvp.attendanceStatus === 'Hadir' && existingRsvp.ticketToken && (
+                    <>
+                        <p className="text-cream/70 text-sm text-center px-4">
+                            Halo <span className="text-lantern-light font-semibold">{existingRsvp.name}</span>!
+                            Berikut tiket masuk Anda — tunjukkan QR code ini saat tiba.
+                        </p>
+                        <TicketView name={existingRsvp.name} ticketToken={existingRsvp.ticketToken} />
+                    </>
+                )}
+
+                {existingRsvp.attendanceStatus === 'Tidak' && (
+                    <div className="text-center space-y-3 px-4">
+                        <p className="text-cream/80">
+                            Halo <span className="text-lantern-light font-semibold">{existingRsvp.name}</span>,
+                            Anda sebelumnya mengonfirmasi <strong>tidak hadir</strong>.
+                        </p>
+                        <p className="text-cream/50 text-sm">Terima kasih sudah memberi tahu kami.</p>
+                    </div>
+                )}
+
+                <button
+                    onClick={() => setExistingRsvp(null)}
+                    className="text-cream/40 hover:text-cream/70 text-sm underline underline-offset-2 transition-colors"
+                >
+                    Ubah RSVP
+                </button>
             </div>
         );
     }
