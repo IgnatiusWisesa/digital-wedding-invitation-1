@@ -138,9 +138,19 @@ router.get("/rsvp/lookup", async (req, res) => {
 
     if (!rsvp) return res.json({ found: false });
 
+    // Kalau "Hadir" tapi belum punya ticketCode (misal ditambah via admin), buat sekarang
+    let ticketCodeToUse = rsvp.ticketCode;
+    if (rsvp.attendanceStatus === "Hadir" && !ticketCodeToUse) {
+      ticketCodeToUse = randomUUID();
+      await RsvpModel.updateOne(
+        { _id: rsvp._id },
+        { ticketCode: ticketCodeToUse, ticketIssuedAt: new Date() }
+      );
+    }
+
     const ticketToken =
-      rsvp.attendanceStatus === "Hadir" && rsvp.ticketCode
-        ? signTicket(rsvp.ticketCode, rsvp.name)
+      rsvp.attendanceStatus === "Hadir" && ticketCodeToUse
+        ? signTicket(ticketCodeToUse, rsvp.name)
         : null;
 
     return res.json({
