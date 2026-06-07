@@ -71,6 +71,8 @@ export const AdminDashboard = () => {
     const [photos, setPhotos] = useState<any[]>([]);
     const [showResetModal, setShowResetModal] = useState(false);
     const [resetLoading, setResetLoading] = useState(false);
+    const [resetPassword, setResetPassword] = useState('');
+    const [resetUnlocked, setResetUnlocked] = useState(false);
     const [showStreamingModal, setShowStreamingModal] = useState(false);
     const [streamingUrl, setStreamingUrl] = useState('');
     const [streamingLoading, setStreamingLoading] = useState(false);
@@ -361,15 +363,17 @@ export const AdminDashboard = () => {
         setResetLoading(true);
         try {
             const API_URL = getApiUrl();
-            const res = await axios.post(`${API_URL}/api/admin/reset`, { target }, axiosConfig);
+            const res = await axios.post(`${API_URL}/api/admin/reset`, { target, resetPassword }, axiosConfig);
             const { deleted } = res.data;
             const msg = Object.entries(deleted).map(([k, v]) => `${k}: ${v}`).join(', ');
             alert(`✅ Berhasil hapus — ${msg}`);
             setShowResetModal(false);
+            setResetPassword('');
+            setResetUnlocked(false);
             fetchStats();
             fetchGuests();
-        } catch {
-            alert('Gagal reset data');
+        } catch (err: any) {
+            alert(err.response?.data?.error || 'Gagal reset data');
         } finally {
             setResetLoading(false);
         }
@@ -1200,50 +1204,82 @@ export const AdminDashboard = () => {
                 <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[80] p-4">
                     <div className="bg-night-800 border border-red-500/50 rounded-lg p-6 max-w-md w-full">
                         <h3 className="text-xl font-bold text-red-400 mb-2">🗑️ Reset Data</h3>
-                        <p className="text-white/60 text-sm mb-6">Pilih data yang ingin dihapus. Tindakan ini <span className="text-red-400 font-semibold">tidak bisa dibatalkan</span>.</p>
-                        <div className="flex flex-col gap-3">
-                            <button
-                                disabled={resetLoading}
-                                onClick={() => { if (window.confirm('Hapus semua data RSVP? Tindakan ini permanen.')) handleReset('rsvp'); }}
-                                className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
-                            >
-                                <div className="font-medium">Hapus semua RSVP</div>
-                                <div className="text-xs text-white/40 mt-0.5">Hapus semua data tamu yang sudah RSVP</div>
-                            </button>
-                            <button
-                                disabled={resetLoading}
-                                onClick={() => { if (window.confirm('Hapus semua foto di Live Album? Foto di Cloudinary juga akan dihapus.')) handleReset('photos'); }}
-                                className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
-                            >
-                                <div className="font-medium">Hapus semua foto</div>
-                                <div className="text-xs text-white/40 mt-0.5">Hapus foto Live Album + Cloudinary</div>
-                            </button>
-                            <button
-                                disabled={resetLoading}
-                                onClick={() => { if (window.confirm('Hapus semua invite links dari database? Link undangan akan tidak valid.')) handleReset('invites'); }}
-                                className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
-                            >
-                                <div className="font-medium">Hapus semua invite links</div>
-                                <div className="text-xs text-white/40 mt-0.5">Hapus 374+ kode undangan dari database</div>
-                            </button>
-                            <button
-                                disabled={resetLoading}
-                                onClick={() => { if (window.confirm('HAPUS SEMUA DATA? RSVP + foto + invite links akan dihapus permanen.')) handleReset('all'); }}
-                                className="bg-red-700/40 hover:bg-red-700/70 border border-red-500 text-red-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
-                            >
-                                <div className="font-bold">⚠️ Hapus semua data</div>
-                                <div className="text-xs text-white/40 mt-0.5">RSVP + foto + invite links — bersih total</div>
-                            </button>
-                        </div>
-                        <div className="mt-6 flex justify-end">
-                            <button
-                                onClick={() => setShowResetModal(false)}
-                                disabled={resetLoading}
-                                className="text-white/50 hover:text-white px-4 py-2 transition-colors"
-                            >
-                                {resetLoading ? '⏳ Menghapus...' : 'Batal'}
-                            </button>
-                        </div>
+                        {!resetUnlocked ? (
+                            <>
+                                <p className="text-white/60 text-sm mb-4">Masukkan password untuk melanjutkan. Fitur ini hanya untuk admin yang berwenang.</p>
+                                <input
+                                    type="password"
+                                    value={resetPassword}
+                                    onChange={(e) => setResetPassword(e.target.value)}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' && resetPassword) setResetUnlocked(true); }}
+                                    className="w-full bg-night/50 text-white border border-red-500/40 rounded py-2 px-4 focus:outline-none focus:border-red-400 mb-4"
+                                    placeholder="Password reset..."
+                                    autoFocus
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => { if (resetPassword) setResetUnlocked(true); }}
+                                        disabled={!resetPassword}
+                                        className="flex-1 bg-red-600/40 hover:bg-red-600/70 text-red-200 font-bold py-2 px-4 rounded transition-all disabled:opacity-40"
+                                    >
+                                        Lanjut
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowResetModal(false); setResetPassword(''); setResetUnlocked(false); }}
+                                        className="text-white/50 hover:text-white px-4 py-2 transition-colors"
+                                    >
+                                        Batal
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-white/60 text-sm mb-6">Pilih data yang ingin dihapus. Tindakan ini <span className="text-red-400 font-semibold">tidak bisa dibatalkan</span>.</p>
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        disabled={resetLoading}
+                                        onClick={() => { if (window.confirm('Hapus semua data RSVP? Tindakan ini permanen.')) handleReset('rsvp'); }}
+                                        className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
+                                    >
+                                        <div className="font-medium">Hapus semua RSVP</div>
+                                        <div className="text-xs text-white/40 mt-0.5">Hapus semua data tamu yang sudah RSVP</div>
+                                    </button>
+                                    <button
+                                        disabled={resetLoading}
+                                        onClick={() => { if (window.confirm('Hapus semua foto di Live Album? Foto di Cloudinary juga akan dihapus.')) handleReset('photos'); }}
+                                        className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
+                                    >
+                                        <div className="font-medium">Hapus semua foto</div>
+                                        <div className="text-xs text-white/40 mt-0.5">Hapus foto Live Album + Cloudinary</div>
+                                    </button>
+                                    <button
+                                        disabled={resetLoading}
+                                        onClick={() => { if (window.confirm('Hapus semua invite links dari database? Link undangan akan tidak valid.')) handleReset('invites'); }}
+                                        className="bg-orange-600/30 hover:bg-orange-600/60 border border-orange-500/50 text-orange-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
+                                    >
+                                        <div className="font-medium">Hapus semua invite links</div>
+                                        <div className="text-xs text-white/40 mt-0.5">Hapus kode undangan dari database</div>
+                                    </button>
+                                    <button
+                                        disabled={resetLoading}
+                                        onClick={() => { if (window.confirm('HAPUS SEMUA DATA? RSVP + foto + invite links akan dihapus permanen.')) handleReset('all'); }}
+                                        className="bg-red-700/40 hover:bg-red-700/70 border border-red-500 text-red-300 px-4 py-3 rounded text-left transition-all disabled:opacity-50"
+                                    >
+                                        <div className="font-bold">⚠️ Hapus semua data</div>
+                                        <div className="text-xs text-white/40 mt-0.5">RSVP + foto + invite links — bersih total</div>
+                                    </button>
+                                </div>
+                                <div className="mt-6 flex justify-end">
+                                    <button
+                                        onClick={() => { setShowResetModal(false); setResetPassword(''); setResetUnlocked(false); }}
+                                        disabled={resetLoading}
+                                        className="text-white/50 hover:text-white px-4 py-2 transition-colors"
+                                    >
+                                        {resetLoading ? '⏳ Menghapus...' : 'Batal'}
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
