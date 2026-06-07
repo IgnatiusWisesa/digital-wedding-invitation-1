@@ -56,6 +56,8 @@ export const RegDashboard = () => {
     const [scanResult, setScanResult] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [inviteSuggestions, setInviteSuggestions] = useState<{ name: string; quota: number; event: string; note: string }[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showPhotoDrive, setShowPhotoDrive] = useState(false);
     const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
@@ -165,7 +167,7 @@ export const RegDashboard = () => {
                 setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
                 fetchGuests(); fetchStats();
             }
-        } catch (err: any) { alert(err.response?.data?.message || 'Gagal menambah tamu'); }
+        } catch (err: any) { alert(err.response?.data?.error || err.response?.data?.message || 'Gagal menambah tamu'); }
     };
 
     const handleEditGuest = (guest: Guest) => {
@@ -419,9 +421,52 @@ export const RegDashboard = () => {
                     <div className="bg-night-800 border border-accent-green/30 rounded-lg p-8 max-w-md w-full">
                         <h2 className="text-2xl font-serif text-accent-yellow mb-6">Tambah Tamu</h2>
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-white/80 mb-2">Nama</label>
-                                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow" placeholder="Nama tamu" />
+                            <div className="relative">
+                                <label className="block text-white/80 mb-2">Nama Tamu</label>
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={async (e) => {
+                                        const val = e.target.value;
+                                        setFormData({ ...formData, name: val });
+                                        if (val.length >= 2) {
+                                            try {
+                                                const r = await axios.get(`${getApiUrl()}/api/admin/invites/search?q=${encodeURIComponent(val)}`, axiosConfig);
+                                                setInviteSuggestions(r.data);
+                                                setShowSuggestions(r.data.length > 0);
+                                            } catch { setShowSuggestions(false); }
+                                        } else {
+                                            setShowSuggestions(false);
+                                        }
+                                    }}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                                    className="w-full bg-night/50 text-white border border-accent-green/50 rounded py-2 px-4 focus:outline-none focus:border-accent-yellow"
+                                    placeholder="Ketik nama (atau cari dari data master)..."
+                                    autoComplete="off"
+                                />
+                                {showSuggestions && (
+                                    <div className="absolute z-50 top-full left-0 right-0 bg-night-800 border border-accent-yellow/40 rounded-b-lg shadow-xl max-h-48 overflow-y-auto">
+                                        {inviteSuggestions.map((inv, i) => (
+                                            <div
+                                                key={i}
+                                                className="px-4 py-2 hover:bg-accent-yellow/10 cursor-pointer border-b border-white/5 last:border-0"
+                                                onMouseDown={() => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        name: inv.name,
+                                                        guestCount: inv.quota,
+                                                        attendanceChoice: inv.event,
+                                                        adminNote: inv.note || '',
+                                                    });
+                                                    setShowSuggestions(false);
+                                                }}
+                                            >
+                                                <span className="text-white font-medium">{inv.name}</span>
+                                                <span className="text-white/40 text-xs ml-2">{inv.event} · {inv.quota} tamu</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-white/80 mb-2">Status Kehadiran</label>
