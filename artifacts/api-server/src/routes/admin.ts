@@ -494,6 +494,16 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
   }
 });
 
+// POST /api/admin/reset/verify — cek password reset saja
+router.post("/admin/reset/verify", authMiddleware, async (req, res) => {
+  const { resetPassword } = req.body;
+  const RESET_PWD = process.env.RESET_PASSWORD;
+  if (RESET_PWD && resetPassword !== RESET_PWD) {
+    return res.status(403).json({ error: "Password salah. Akses ditolak." });
+  }
+  return res.json({ success: true });
+});
+
 // POST /api/admin/reset — delete all RSVPs, photos, and optionally invites
 router.post("/admin/reset", authMiddleware, async (req, res) => {
   try {
