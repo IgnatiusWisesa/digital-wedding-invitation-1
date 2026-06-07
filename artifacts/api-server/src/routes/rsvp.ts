@@ -138,6 +138,11 @@ router.get("/rsvp/lookup", async (req, res) => {
 
     if (!rsvp) return res.json({ found: false });
 
+    // "Belum RSVP" = ada di invite list tapi belum submit form → tampilkan form biasa
+    if (rsvp.attendanceStatus === "Belum RSVP" || !rsvp.attendanceStatus) {
+      return res.json({ found: false });
+    }
+
     // Kalau "Hadir" tapi belum punya ticketCode (misal ditambah via admin), buat sekarang
     let ticketCodeToUse = rsvp.ticketCode;
     if (rsvp.attendanceStatus === "Hadir" && !ticketCodeToUse) {
