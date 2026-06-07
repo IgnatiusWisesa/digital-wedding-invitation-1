@@ -41,9 +41,6 @@ export const WishesList = () => {
                         <div key={idx} className="border-b border-orange-500/20 pb-4 last:border-0 last:pb-0">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-bold text-white">{wish.name}</h4>
-                                <span className={`text-[10px] px-2 py-1 rounded-full ${wish.attendanceStatus === 'Hadir' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
-                                    {wish.attendanceStatus === 'Hadir' ? 'Attending' : 'Cannot Attend'}
-                                </span>
                             </div>
                             <p className="text-cream/80 text-sm font-light italic">"{wish.note}"</p>
                         </div>
