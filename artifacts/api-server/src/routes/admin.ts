@@ -73,7 +73,10 @@ router.get("/admin/stats", authMiddleware, async (req, res) => {
 
     if (desk) {
       // Desk-specific stats: check-ins at this desk + global attending
-      const deskFilter = { checkInDesk: desk, isCheckedIn: true };
+      const isGerejaDesk = desk === "master";
+      const deskFilter = isGerejaDesk
+        ? { checkInGereja: true }
+        : { checkInResepsi: true };
       const [checkedIn, byEventAgg, totalAttending] = await Promise.all([
         RsvpModel.countDocuments(deskFilter),
         RsvpModel.aggregate([
@@ -204,7 +207,10 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
 
     // Desk view: only show checked-in RSVPs (unchanged behaviour)
     if (desk) {
-      const query: Record<string, unknown> = { checkInDesk: desk, isCheckedIn: true };
+      const isGerejaDesk = desk === "master";
+      const query: Record<string, unknown> = isGerejaDesk
+        ? { checkInGereja: true }
+        : { checkInResepsi: true };
       if (search) query.name = { $regex: search, $options: "i" };
       const [guests, total] = await Promise.all([
         RsvpModel.find(query).skip(skip).limit(limit).sort({ checkedInAt: -1, createdAt: -1 }),
@@ -318,6 +324,11 @@ router.post("/admin/guests", authMiddleware, async (req, res) => {
         checkedInBy: user?.username,
         checkInMethod: "manual",
         ...(checkInDesk ? { checkInDesk } : {}),
+        ...(checkInDesk === "master"
+          ? { checkInGereja: true, checkInGerejaAt: new Date() }
+          : checkInDesk
+            ? { checkInResepsi: true, checkInResepsiAt: new Date(), checkInResepsiDesk: checkInDesk }
+            : {}),
       } : {}),
     });
 
@@ -421,12 +432,23 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
       }
     }
     if (isCheckedIn !== undefined) {
-      guest.isCheckedIn = isCheckedIn;
       if (isCheckedIn) {
+        const isGerejaDesk = checkInDesk === "master";
+        if (isGerejaDesk && !(guest as any).checkInGereja) {
+          (guest as any).checkInGereja = true;
+          (guest as any).checkInGerejaAt = new Date();
+        } else if (!isGerejaDesk && !(guest as any).checkInResepsi) {
+          (guest as any).checkInResepsi = true;
+          (guest as any).checkInResepsiAt = new Date();
+          if (checkInDesk) (guest as any).checkInResepsiDesk = checkInDesk;
+        }
+        guest.isCheckedIn = true;
         if (!guest.checkedInAt) guest.checkedInAt = new Date();
         guest.checkedInBy = user?.username;
         guest.checkInMethod = "manual";
         if (checkInDesk) (guest as any).checkInDesk = checkInDesk;
+      } else {
+        guest.isCheckedIn = isCheckedIn;
       }
     }
 
@@ -461,10 +483,23 @@ router.post("/admin/checkin/scan", authMiddleware, async (req, res) => {
     const guest = await RsvpModel.findOne({ ticketCode: payload.code });
     if (!guest) return res.status(404).json({ success: false, message: "Guest not found" });
 
-    if (guest.isCheckedIn) {
-      return res.json({ success: false, message: "Guest already checked in", guest: guest.toObject() });
+    const isGerejaDesk = desk === "master";
+    if (isGerejaDesk && (guest as any).checkInGereja) {
+      return res.json({ success: false, message: "Tamu sudah check-in di Gereja", guest: guest.toObject() });
+    }
+    if (!isGerejaDesk && (guest as any).checkInResepsi) {
+      const prevDesk = (guest as any).checkInResepsiDesk || "meja resepsi";
+      return res.json({ success: false, message: `Tamu sudah check-in di Resepsi (${prevDesk})`, guest: guest.toObject() });
     }
 
+    if (isGerejaDesk) {
+      (guest as any).checkInGereja = true;
+      (guest as any).checkInGerejaAt = new Date();
+    } else {
+      (guest as any).checkInResepsi = true;
+      (guest as any).checkInResepsiAt = new Date();
+      (guest as any).checkInResepsiDesk = desk;
+    }
     guest.isCheckedIn = true;
     guest.checkedInAt = new Date();
     guest.checkedInBy = (req as any).user?.username;
