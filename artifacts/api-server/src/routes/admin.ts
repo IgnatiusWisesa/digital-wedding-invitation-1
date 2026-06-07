@@ -500,8 +500,13 @@ router.post("/admin/reset", authMiddleware, async (req, res) => {
     if (!MONGODB_URI) return res.status(503).json({ error: "DB not configured" });
     await connectDB();
 
-    const { target } = req.body as { target: "rsvp" | "photos" | "invites" | "all" };
+    const { target, resetPassword } = req.body as { target: "rsvp" | "photos" | "invites" | "all"; resetPassword?: string };
     if (!target) return res.status(400).json({ error: "target required: rsvp | photos | invites | all" });
+
+    const RESET_PWD = process.env.RESET_PASSWORD;
+    if (RESET_PWD && resetPassword !== RESET_PWD) {
+      return res.status(403).json({ error: "Password salah. Tindakan reset dibatalkan." });
+    }
 
     const { PhotoModel } = await import("./photos");
     const { InviteModel } = await import("./sheets");
