@@ -135,22 +135,8 @@ export const RsvpForm: React.FC = () => {
     if (!checkingExisting && existingRsvp && !editMode) {
         return (
             <div className="flex flex-col items-center justify-center space-y-6 animate-fade-in">
-                <div className={`px-6 py-3 rounded-full font-bold shadow-lg ${
-                    existingRsvp.attendanceStatus === 'Hadir'
-                        ? 'bg-gold-500 text-night'
-                        : 'bg-white/10 text-cream border border-white/20'
-                }`}>
-                    {existingRsvp.attendanceStatus === 'Hadir' ? '✓ Anda sudah RSVP' : 'RSVP Tercatat'}
-                </div>
-
                 {existingRsvp.attendanceStatus === 'Hadir' && existingRsvp.ticketToken && (
-                    <>
-                        <p className="text-cream/70 text-sm text-center px-4">
-                            Halo <span className="text-lantern-light font-semibold">{existingRsvp.name}</span>!
-                            Berikut tiket masuk Anda — tunjukkan QR code ini saat tiba.
-                        </p>
-                        <TicketView name={existingRsvp.name} ticketToken={existingRsvp.ticketToken} />
-                    </>
+                    <TicketView name={existingRsvp.name} ticketToken={existingRsvp.ticketToken} />
                 )}
 
                 {existingRsvp.attendanceStatus === 'Tidak' && (
