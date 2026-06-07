@@ -15,7 +15,7 @@ function apiKeyMiddleware(req: any, res: any, next: any) {
 
 router.post("/checkin", apiKeyMiddleware, async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, desk = "master" } = req.body;
     if (!token) return res.status(400).json({ error: "Token required" });
 
     let payload: any;
@@ -29,13 +29,26 @@ router.post("/checkin", apiKeyMiddleware, async (req, res) => {
     const guest = await RsvpModel.findOne({ ticketCode: payload.code });
     if (!guest) return res.status(404).json({ success: false, message: "Guest not found" });
 
-    if (guest.isCheckedIn) {
-      return res.json({ success: false, message: "Guest already checked in", guest: guest.toObject() });
+    const isGerejaDesk = desk === "master";
+    if (isGerejaDesk && (guest as any).checkInGereja) {
+      return res.json({ success: false, message: "Guest already checked in for Gereja", guest: guest.toObject() });
+    }
+    if (!isGerejaDesk && (guest as any).checkInResepsi) {
+      return res.json({ success: false, message: "Guest already checked in for Resepsi", guest: guest.toObject() });
     }
 
+    if (isGerejaDesk) {
+      (guest as any).checkInGereja = true;
+      (guest as any).checkInGerejaAt = new Date();
+    } else {
+      (guest as any).checkInResepsi = true;
+      (guest as any).checkInResepsiAt = new Date();
+      (guest as any).checkInResepsiDesk = desk;
+    }
     guest.isCheckedIn = true;
     guest.checkedInAt = new Date();
     guest.checkInMethod = "qr";
+    (guest as any).checkInDesk = desk;
     await guest.save();
 
     return res.json({ success: true, message: "Check-in successful", guest: guest.toObject() });
