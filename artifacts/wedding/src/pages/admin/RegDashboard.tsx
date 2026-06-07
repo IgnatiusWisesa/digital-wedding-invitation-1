@@ -176,7 +176,7 @@ export const RegDashboard = () => {
             return;
         }
         try {
-            const res = await axios.post(`${getApiUrl()}/api/admin/guests`, formData, axiosConfig);
+            const res = await axios.post(`${getApiUrl()}/api/admin/guests`, { ...formData, checkInDesk: formData.isCheckedIn ? deskId : undefined }, axiosConfig);
             if (res.data.success) {
                 alert('Tamu berhasil ditambahkan!');
                 setShowAddModal(false);
