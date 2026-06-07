@@ -122,6 +122,43 @@ router.post("/rsvp", async (req, res) => {
   }
 });
 
+// GET /api/rsvp/lookup?name=xxx — cek apakah nama ini sudah pernah RSVP
+router.get("/rsvp/lookup", async (req, res) => {
+  try {
+    await connectDB();
+    if (!MONGODB_URI) return res.json({ found: false });
+
+    const { name } = req.query;
+    if (!name || typeof name !== "string") return res.json({ found: false });
+
+    const searchName = name.trim().replace(/\s+/g, " ").toLowerCase();
+    const rsvp = await RsvpModel.findOne({ normalizedName: searchName }).select(
+      "name attendanceStatus ticketCode attendanceChoice guestCount"
+    );
+
+    if (!rsvp) return res.json({ found: false });
+
+    const ticketToken =
+      rsvp.attendanceStatus === "Hadir" && rsvp.ticketCode
+        ? signTicket(rsvp.ticketCode, rsvp.name)
+        : null;
+
+    return res.json({
+      found: true,
+      rsvp: {
+        name: rsvp.name,
+        attendanceStatus: rsvp.attendanceStatus,
+        attendanceChoice: rsvp.attendanceChoice,
+        guestCount: rsvp.guestCount,
+        ticketToken,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "RSVP lookup error");
+    return res.json({ found: false });
+  }
+});
+
 router.get("/rsvp/wishes", async (req, res) => {
   try {
     await connectDB();
