@@ -385,8 +385,8 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     }
     if (isCheckedIn !== undefined) {
       guest.isCheckedIn = isCheckedIn;
-      if (isCheckedIn && !guest.checkedInAt) {
-        guest.checkedInAt = new Date();
+      if (isCheckedIn) {
+        if (!guest.checkedInAt) guest.checkedInAt = new Date();
         guest.checkedInBy = user?.username;
         guest.checkInMethod = "manual";
         if (checkInDesk) (guest as any).checkInDesk = checkInDesk;
