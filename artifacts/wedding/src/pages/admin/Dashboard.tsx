@@ -59,6 +59,7 @@ export const AdminDashboard = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [inviteSuggestions, setInviteSuggestions] = useState<{ name: string; quota: number; event: string; note: string }[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [existingGuest, setExistingGuest] = useState<{ _id: string; attendanceStatus: string; isCheckedIn: boolean } | null>(null);
     const [showQrModal, setShowQrModal] = useState(false);
     const [showPhotoDrive, setShowPhotoDrive] = useState(false);
     const [showImportPanel, setShowImportPanel] = useState(false);
@@ -210,14 +211,32 @@ export const AdminDashboard = () => {
         );
     };
 
+    const resetAddForm = () => {
+        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
+        setExistingGuest(null);
+    };
+
     const handleAddGuest = async () => {
+        if (existingGuest) {
+            try {
+                const API_URL = getApiUrl();
+                await axios.patch(`${API_URL}/api/admin/guests/${existingGuest._id}`, { isCheckedIn: true, attendanceStatus: 'Hadir' }, axiosConfig);
+                alert(`${formData.name} berhasil di-check-in!`);
+                setShowAddModal(false);
+                resetAddForm();
+                fetchGuests(); fetchStats();
+            } catch (err: any) {
+                alert(err.response?.data?.error || 'Gagal check-in tamu');
+            }
+            return;
+        }
         try {
             const API_URL = getApiUrl();
             const response = await axios.post(`${API_URL}/api/admin/guests`, formData, axiosConfig);
             if (response.data.success) {
                 alert(`Guest added successfully! ${response.data.guest.ticketToken ? 'Ticket generated.' : ''}`);
                 setShowAddModal(false);
-                setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
+                resetAddForm();
                 fetchGuests();
                 fetchStats();
             }
@@ -644,6 +663,7 @@ export const AdminDashboard = () => {
                                     onChange={async (e) => {
                                         const val = e.target.value;
                                         setFormData({ ...formData, name: val });
+                                        setExistingGuest(null);
                                         if (val.length >= 2) {
                                             try {
                                                 const API_URL = getApiUrl();
@@ -666,7 +686,7 @@ export const AdminDashboard = () => {
                                             <div
                                                 key={i}
                                                 className="px-4 py-2 hover:bg-accent-yellow/10 cursor-pointer border-b border-white/5 last:border-0"
-                                                onMouseDown={() => {
+                                                onMouseDown={async () => {
                                                     setFormData({
                                                         ...formData,
                                                         name: inv.name,
@@ -675,6 +695,12 @@ export const AdminDashboard = () => {
                                                         adminNote: inv.note || '',
                                                     });
                                                     setShowSuggestions(false);
+                                                    try {
+                                                        const API_URL = getApiUrl();
+                                                        const r = await axios.get(`${API_URL}/api/admin/guests?search=${encodeURIComponent(inv.name)}&limit=20`, axiosConfig);
+                                                        const found = (r.data.guests || []).find((g: any) => g.name.toLowerCase() === inv.name.toLowerCase() && g.attendanceStatus !== 'Belum RSVP');
+                                                        setExistingGuest(found ? { _id: found._id, attendanceStatus: found.attendanceStatus, isCheckedIn: found.isCheckedIn || false } : null);
+                                                    } catch { setExistingGuest(null); }
                                                 }}
                                             >
                                                 <span className="text-white font-medium">{inv.name}</span>
@@ -684,6 +710,13 @@ export const AdminDashboard = () => {
                                     </div>
                                 )}
                             </div>
+                            {existingGuest && (
+                                <div className={`rounded px-3 py-2 text-sm border ${existingGuest.isCheckedIn ? 'bg-green-500/20 border-green-400/40 text-green-300' : 'bg-blue-500/20 border-blue-400/40 text-blue-300'}`}>
+                                    {existingGuest.isCheckedIn
+                                        ? `✅ Tamu ini sudah check-in (${existingGuest.attendanceStatus}). Klik tombol untuk check-in ulang jika perlu.`
+                                        : `ℹ️ Tamu ini sudah terdaftar (${existingGuest.attendanceStatus}). Klik "Check-in Sekarang" untuk melakukan check-in.`}
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-white/80 mb-2">Attendance Status</label>
                                 <select
@@ -761,15 +794,12 @@ export const AdminDashboard = () => {
                             <div className="flex gap-3 mt-6">
                                 <button
                                     onClick={handleAddGuest}
-                                    className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded transition-all"
+                                    className={`flex-1 ${existingGuest ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold py-3 px-4 rounded transition-all`}
                                 >
-                                    Add Guest
+                                    {existingGuest ? '⚡ Check-in Sekarang' : 'Add Guest'}
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        setShowAddModal(false);
-                                        setFormData({ name: '', attendanceStatus: 'Hadir', attendanceChoice: 'Resepsi', note: '', adminNote: '', guestCount: 1, guestCountReal: undefined, angpauOption: 'tanpa', isCheckedIn: false });
-                                    }}
+                                    onClick={() => { setShowAddModal(false); resetAddForm(); }}
                                     className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-4 rounded transition-all"
                                 >
                                     Cancel
