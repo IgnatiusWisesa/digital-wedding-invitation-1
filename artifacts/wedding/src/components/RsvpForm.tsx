@@ -93,7 +93,8 @@ export const RsvpForm: React.FC = () => {
             const response = await axios.post(`${API_URL}/api/rsvp`, {
                 ...formData,
                 guestQuota,
-                guestCount: formData.attendanceStatus === 'Hadir' ? formData.guestCount : 1
+                guestCount: formData.attendanceStatus === 'Hadir' ? formData.guestCount : 1,
+                invitedName: invite?.name || undefined,
             });
             if (response.data.success) {
                 setSuccessData(response.data.rsvp);
