@@ -439,20 +439,23 @@ router.patch("/admin/guests/:id", authMiddleware, async (req, res) => {
     }
     if (isCheckedIn !== undefined) {
       if (isCheckedIn) {
-        const isGerejaDesk = checkInDesk === "master";
-        if (isGerejaDesk && !(guest as any).checkInGereja) {
-          (guest as any).checkInGereja = true;
-          (guest as any).checkInGerejaAt = new Date();
-        } else if (!isGerejaDesk && !(guest as any).checkInResepsi) {
-          (guest as any).checkInResepsi = true;
-          (guest as any).checkInResepsiAt = new Date();
-          if (checkInDesk) (guest as any).checkInResepsiDesk = checkInDesk;
+        // Only update event-based fields if desk is explicitly provided
+        if (checkInDesk) {
+          const isGerejaDesk = checkInDesk === "master";
+          if (isGerejaDesk && !(guest as any).checkInGereja) {
+            (guest as any).checkInGereja = true;
+            (guest as any).checkInGerejaAt = new Date();
+          } else if (!isGerejaDesk && !(guest as any).checkInResepsi) {
+            (guest as any).checkInResepsi = true;
+            (guest as any).checkInResepsiAt = new Date();
+            (guest as any).checkInResepsiDesk = checkInDesk;
+          }
+          (guest as any).checkInDesk = checkInDesk;
         }
         guest.isCheckedIn = true;
         if (!guest.checkedInAt) guest.checkedInAt = new Date();
         guest.checkedInBy = user?.username;
         guest.checkInMethod = "manual";
-        if (checkInDesk) (guest as any).checkInDesk = checkInDesk;
       } else {
         guest.isCheckedIn = isCheckedIn;
       }
