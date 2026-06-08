@@ -214,6 +214,7 @@ export const RegDashboard = () => {
                 guestCountReal: formData.guestCountReal ?? null,
                 angpauOption: formData.angpauOption,
                 isCheckedIn: formData.isCheckedIn,
+                checkInDesk: deskId,
             }, axiosConfig);
             if (res.data.success) {
                 alert('Data tamu berhasil diupdate!');
