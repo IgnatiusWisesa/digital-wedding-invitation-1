@@ -30,6 +30,7 @@ interface IRsvp extends Document {
   checkInResepsi?: boolean;
   checkInResepsiAt?: Date;
   checkInResepsiDesk?: string;
+  invitedName?: string;
   sentimentScore: number;
   guestQuota: number;
   guestCount: number;
@@ -61,6 +62,7 @@ const RsvpSchema = new Schema<IRsvp>(
     checkInResepsi: { type: Boolean, default: false },
     checkInResepsiAt: { type: Date },
     checkInResepsiDesk: { type: String },
+    invitedName: { type: String, index: true },
     sentimentScore: { type: Number, default: 0 },
     guestQuota: { type: Number, default: 1 },
     guestCount: { type: Number, default: 1 },
@@ -103,7 +105,7 @@ router.post("/rsvp", async (req, res) => {
       return res.status(503).json({ error: "Database not configured" });
     }
 
-    const { name, attendanceChoice, attendanceStatus, note, guestQuota = 1, guestCount = 1 } = req.body;
+    const { name, attendanceChoice, attendanceStatus, note, guestQuota = 1, guestCount = 1, invitedName } = req.body;
 
     if (!name || !attendanceChoice || !attendanceStatus) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -132,6 +134,9 @@ router.post("/rsvp", async (req, res) => {
         guestQuota,
         guestCount: actualGuestCount,
         angpauOption: "tanpa",
+        ...(invitedName && invitedName.trim().toLowerCase() !== searchName
+          ? { invitedName: invitedName.trim() }
+          : {}),
       },
       { new: true, upsert: true }
     );
