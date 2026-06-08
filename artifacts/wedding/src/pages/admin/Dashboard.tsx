@@ -692,20 +692,33 @@ export const AdminDashboard = () => {
                                                 key={i}
                                                 className="px-4 py-2 hover:bg-accent-yellow/10 cursor-pointer border-b border-white/5 last:border-0"
                                                 onMouseDown={async () => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        name: inv.name,
-                                                        guestCount: inv.quota,
-                                                        attendanceChoice: inv.event,
-                                                        adminNote: inv.note || '',
-                                                    });
                                                     setShowSuggestions(false);
                                                     try {
                                                         const API_URL = getApiUrl();
                                                         const r = await axios.get(`${API_URL}/api/admin/guests?search=${encodeURIComponent(inv.name)}&limit=20`, axiosConfig);
                                                         const found = (r.data.guests || []).find((g: any) => g.name.toLowerCase() === inv.name.toLowerCase() && g.attendanceStatus !== 'Belum RSVP');
-                                                        setExistingGuest(found ? { _id: found._id, attendanceStatus: found.attendanceStatus, isCheckedIn: found.isCheckedIn || false } : null);
-                                                    } catch { setExistingGuest(null); }
+                                                        if (found) {
+                                                            setFormData({
+                                                                ...formData,
+                                                                name: found.name,
+                                                                guestCount: found.guestCount ?? inv.quota,
+                                                                guestCountReal: found.guestCountReal ?? undefined,
+                                                                attendanceChoice: found.attendanceChoice || inv.event,
+                                                                attendanceStatus: found.attendanceStatus || 'Hadir',
+                                                                note: found.note || '',
+                                                                adminNote: found.adminNote || inv.note || '',
+                                                                angpauOption: found.angpauOption || 'tanpa',
+                                                                isCheckedIn: found.isCheckedIn || false,
+                                                            });
+                                                            setExistingGuest({ _id: found._id, attendanceStatus: found.attendanceStatus, isCheckedIn: found.isCheckedIn || false });
+                                                        } else {
+                                                            setFormData({ ...formData, name: inv.name, guestCount: inv.quota, attendanceChoice: inv.event, adminNote: inv.note || '' });
+                                                            setExistingGuest(null);
+                                                        }
+                                                    } catch {
+                                                        setFormData({ ...formData, name: inv.name, guestCount: inv.quota, attendanceChoice: inv.event, adminNote: inv.note || '' });
+                                                        setExistingGuest(null);
+                                                    }
                                                 }}
                                             >
                                                 <span className="text-white font-medium">{inv.name}</span>
