@@ -237,7 +237,9 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
 
     // Normal view: merge RSVPs + pending invites (guests who haven't RSVPed yet)
     const searchRegex = search ? { $regex: search, $options: "i" } : undefined;
-    const rsvpQuery: Record<string, unknown> = searchRegex ? { name: searchRegex } : {};
+    const rsvpQuery: Record<string, unknown> = searchRegex
+      ? { $or: [{ name: searchRegex }, { invitedName: searchRegex }] } as any
+      : {};
     const inviteQuery: Record<string, unknown> = searchRegex ? { name: searchRegex } : {};
 
     const [allRsvps, allInvites] = await Promise.all([
@@ -360,10 +362,16 @@ router.get("/admin/invites/search", authMiddleware, async (req, res) => {
     const q = ((req.query.q as string) || "").trim();
     if (!q) return res.json([]);
     const invites = await InviteModel.find({ name: { $regex: q, $options: "i" } })
-      .limit(10)
+      .limit(30)
       .lean();
+    // Deduplicate by name (keep latest entry per name)
+    const seen = new Map<string, typeof invites[0]>();
+    for (const inv of invites) {
+      const key = inv.name.trim().toLowerCase();
+      if (!seen.has(key)) seen.set(key, inv);
+    }
     return res.json(
-      invites.map((inv) => ({
+      Array.from(seen.values()).slice(0, 10).map((inv) => ({
         name: inv.name,
         quota: inv.quota,
         event: inv.event,
