@@ -78,6 +78,24 @@ function signTicket(code: string, name: string): string {
   return jwt.sign({ code, name }, TICKET_SECRET, { expiresIn: "90d", algorithm: "HS256" });
 }
 
+function calculateSentiment(note: string | undefined): number {
+  if (!note || note.trim().length === 0) return 0;
+  const text = note.trim().toLowerCase();
+  // Base: character length (longer = more heartfelt), capped at 300
+  let score = Math.min(text.length * 2, 300);
+  // Bonus keywords (Indonesian + English)
+  const bonusWords = [
+    "bahagia","barokah","berkah","sehat","sukses","langgeng","kekal","cinta","kasih","sayang",
+    "doa","moga","semoga","selalu","selamanya","tuhan","allah","berkah","rezeki","amin","amiin",
+    "happy","love","bless","joy","wonderful","forever","wish","hope","health","togeth",
+    "beautiful","amazing","blessed","grace","peace","prosper",
+  ];
+  for (const w of bonusWords) {
+    if (text.includes(w)) score += 15;
+  }
+  return Math.round(score);
+}
+
 router.post("/rsvp", async (req, res) => {
   try {
     await connectDB();
@@ -110,7 +128,7 @@ router.post("/rsvp", async (req, res) => {
         note,
         ticketCode: attendanceStatus === "Hadir" ? ticketCode : undefined,
         ticketIssuedAt: attendanceStatus === "Hadir" ? new Date() : undefined,
-        sentimentScore: 0,
+        sentimentScore: calculateSentiment(note),
         guestQuota,
         guestCount: actualGuestCount,
         angpauOption: "tanpa",
