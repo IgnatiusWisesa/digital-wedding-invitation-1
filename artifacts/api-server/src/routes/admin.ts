@@ -259,8 +259,15 @@ router.get("/admin/guests", authMiddleware, async (req, res) => {
     });
 
     // Pending invites: in InviteModel but no matching RSVP yet
+    // Deduplicate by normalized name — allInvites is sorted by createdAt desc, so first = most recent
+    const seenInviteNames = new Set<string>();
     const pendingGuests = allInvites
-      .filter((inv) => !rsvpNames.has(inv.name.trim().toLowerCase()))
+      .filter((inv) => {
+        const norm = inv.name.trim().toLowerCase();
+        if (rsvpNames.has(norm) || seenInviteNames.has(norm)) return false;
+        seenInviteNames.add(norm);
+        return true;
+      })
       .map((inv) => ({
         _id: inv._id,
         name: inv.name,
