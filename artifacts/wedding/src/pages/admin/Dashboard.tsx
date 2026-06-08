@@ -222,7 +222,7 @@ export const AdminDashboard = () => {
         if (existingGuest) {
             try {
                 const API_URL = getApiUrl();
-                await axios.patch(`${API_URL}/api/admin/guests/${existingGuest._id}`, { isCheckedIn: true, attendanceStatus: 'Hadir' }, axiosConfig);
+                await axios.patch(`${API_URL}/api/admin/guests/${existingGuest._id}`, { isCheckedIn: true, attendanceStatus: 'Hadir', checkInDesk: 'master' }, axiosConfig);
                 alert(`${formData.name} berhasil di-check-in!`);
                 setShowAddModal(false);
                 resetAddForm();
@@ -275,7 +275,8 @@ export const AdminDashboard = () => {
                 guestCount: formData.guestCount,
                 guestCountReal: formData.guestCountReal ?? null,
                 angpauOption: formData.angpauOption,
-                isCheckedIn: formData.isCheckedIn
+                isCheckedIn: formData.isCheckedIn,
+                checkInDesk: 'master',
             }, axiosConfig);
             if (response.data.success) {
                 alert('Guest updated successfully!');
