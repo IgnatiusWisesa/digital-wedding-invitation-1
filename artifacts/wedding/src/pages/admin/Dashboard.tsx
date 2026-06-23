@@ -656,10 +656,13 @@ export const AdminDashboard = () => {
 
             {/* Add Guest Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-night-800 border border-accent-green/30 rounded-lg p-8 max-w-md w-full">
-                        <h2 className="text-2xl font-serif text-accent-yellow mb-6">Add New Guest</h2>
-                        <div className="space-y-4">
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+                    <div className="bg-night-800 border border-accent-green/30 rounded-lg w-full max-w-md flex flex-col my-auto">
+                        <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-white/10 flex-shrink-0">
+                            <h2 className="text-xl sm:text-2xl font-serif text-accent-yellow">Add New Guest</h2>
+                            <button onClick={() => { setShowAddModal(false); resetAddForm(); }} className="text-white/40 hover:text-white text-3xl leading-none pb-1">×</button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 px-5 sm:px-8 py-5 space-y-4">
                             <div className="relative">
                                 <label className="block text-white/80 mb-2">Nama Tamu</label>
                                 <input
@@ -809,7 +812,9 @@ export const AdminDashboard = () => {
                                     <span>Langsung check-in</span>
                                 </label>
                             </div>
-                            <div className="flex gap-3 mt-6">
+                        </div>
+                        <div className="flex-shrink-0 px-5 sm:px-8 py-4 border-t border-white/10">
+                            <div className="flex gap-3">
                                 <button
                                     onClick={handleAddGuest}
                                     className={`flex-1 ${existingGuest ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white font-bold py-3 px-4 rounded transition-all`}
@@ -830,10 +835,13 @@ export const AdminDashboard = () => {
 
             {/* Edit Guest Modal */}
             {showEditModal && selectedGuest && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-night-800 border border-accent-green/30 rounded-lg p-8 max-w-md w-full">
-                        <h2 className="text-2xl font-serif text-accent-yellow mb-6">Edit Guest: {selectedGuest.name}</h2>
-                        <div className="space-y-4">
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+                    <div className="bg-night-800 border border-accent-green/30 rounded-lg w-full max-w-md flex flex-col my-auto">
+                        <div className="flex items-center justify-between px-5 sm:px-8 py-4 border-b border-white/10 flex-shrink-0">
+                            <h2 className="text-xl sm:text-2xl font-serif text-accent-yellow truncate pr-4">Edit: {selectedGuest.name}</h2>
+                            <button onClick={() => { setShowEditModal(false); setSelectedGuest(null); }} className="text-white/40 hover:text-white text-3xl leading-none pb-1 flex-shrink-0">×</button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 px-5 sm:px-8 py-5 space-y-4">
                             <div>
                                 <label className="block text-white/80 mb-2">Attendance Status</label>
                                 <select
@@ -924,7 +932,9 @@ export const AdminDashboard = () => {
                                     <span>Mark as checked-in</span>
                                 </label>
                             </div>
-                            <div className="flex gap-3 mt-6">
+                        </div>
+                        <div className="flex-shrink-0 px-5 sm:px-8 py-4 border-t border-white/10">
+                            <div className="flex gap-3">
                                 <button
                                     onClick={handleSaveEdit}
                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded transition-all"
@@ -948,8 +958,8 @@ export const AdminDashboard = () => {
 
             {/* QR View Modal */}
             {showQrModal && selectedQrGuest && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
-                    <div className="bg-night-800 border border-accent-yellow/30 rounded-lg p-8 max-w-sm w-full text-center">
+                <div className="fixed inset-0 bg-black/90 z-[60] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+                    <div className="bg-night-800 border border-accent-yellow/30 rounded-lg p-5 sm:p-8 max-w-sm w-full text-center my-auto">
                         <h2 className="text-2xl font-serif text-accent-yellow mb-2">Guest Ticket</h2>
                         <p className="text-white/60 mb-6">{selectedQrGuest.name}</p>
                         
@@ -987,8 +997,8 @@ export const AdminDashboard = () => {
 
             {/* Photo Drive Modal */}
             {showPhotoDrive && (
-                <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[70] p-4">
-                    <div className="bg-night-800 border border-purple-500/30 rounded-lg p-8 max-w-5xl w-full h-[80vh] flex flex-col">
+                <div className="fixed inset-0 bg-black/95 z-[70] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+                    <div className="bg-night-800 border border-purple-500/30 rounded-lg p-5 sm:p-8 max-w-5xl w-full max-h-[90dvh] flex flex-col my-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-serif text-accent-yellow">Photo Drive Gallery</h2>
                             <button 
