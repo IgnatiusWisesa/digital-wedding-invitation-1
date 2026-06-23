@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { saveAs } from 'file-saver';
 import QRCode from 'react-qr-code';
 import { getApiUrl } from '../../config/api';
@@ -55,6 +55,8 @@ export const AdminDashboard = () => {
     const [loading, setLoading] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [scanResult, setScanResult] = useState<string>('');
+    const [cameraActive, setCameraActive] = useState(false);
+    const html5QrRef = useRef<Html5Qrcode | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [inviteSuggestions, setInviteSuggestions] = useState<{ name: string; quota: number; event: string; note: string }[]>([]);
@@ -96,16 +98,8 @@ export const AdminDashboard = () => {
     }, [page, search, token]);
 
     useEffect(() => {
-        if (showScanner) {
-            initScanner();
-        }
-        return () => {
-            // Cleanup scanner when component unmounts
-            const scannerElement = document.getElementById('qr-reader');
-            if (scannerElement) {
-                scannerElement.innerHTML = '';
-            }
-        };
+        if (!showScanner) stopCamera();
+        return () => { stopCamera(); };
     }, [showScanner]);
 
     const fetchStreamingUrl = async () => {
@@ -176,41 +170,68 @@ export const AdminDashboard = () => {
         }
     };
 
-    const initScanner = () => {
-        const scanner = new Html5QrcodeScanner('qr-reader', {
-            qrbox: { width: 250, height: 250 },
-            fps: 5,
-        }, false);
-
-        scanner.render(
-            async (decodedText) => {
-                setScanResult('Processing...');
-                try {
-                    const API_URL = getApiUrl();
-                    const response = await axios.post(`${API_URL}/api/admin/checkin/scan`,
-                        { qrData: decodedText },
-                        axiosConfig
-                    );
-                    if (response.data.success) {
-                        setScanResult(`✅ ${response.data.guest.name} checked in successfully!`);
-                        fetchStats();
-                        fetchGuests();
-                    } else {
-                        setScanResult(`⚠️ ${response.data.message}`);
-                    }
-                    scanner.clear();
-                    setTimeout(() => {
-                        setShowScanner(false);
-                        setScanResult('');
-                    }, 3000);
-                } catch (error) {
-                    setScanResult('❌ Check-in failed');
-                }
-            },
-            (_error) => {
-                // Ignore scan errors
+    const handleScanResult = async (decodedText: string) => {
+        setScanResult('⏳ Memproses...');
+        await stopCamera();
+        try {
+            const API_URL = getApiUrl();
+            const response = await axios.post(`${API_URL}/api/admin/checkin/scan`, { qrData: decodedText }, axiosConfig);
+            if (response.data.success) {
+                setScanResult(`✅ ${response.data.guest.name} berhasil check-in!`);
+                fetchStats();
+                fetchGuests();
+            } else {
+                setScanResult(`⚠️ ${response.data.message}`);
             }
-        );
+        } catch {
+            setScanResult('❌ Check-in gagal. Coba lagi.');
+        }
+        setTimeout(() => { setShowScanner(false); setScanResult(''); }, 3000);
+    };
+
+    const startCamera = async () => {
+        setCameraActive(true);
+        setScanResult('');
+        try {
+            const qr = new Html5Qrcode('qr-reader');
+            html5QrRef.current = qr;
+            await qr.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => { handleScanResult(decodedText); },
+                () => {}
+            );
+        } catch {
+            setCameraActive(false);
+            setScanResult('❌ Gagal akses kamera. Cek izin browser.');
+            setTimeout(() => setScanResult(''), 4000);
+        }
+    };
+
+    const stopCamera = async () => {
+        try {
+            if (html5QrRef.current) {
+                await html5QrRef.current.stop();
+                html5QrRef.current.clear();
+                html5QrRef.current = null;
+            }
+        } catch {}
+        setCameraActive(false);
+    };
+
+    const handleScanFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+        try {
+            const qr = new Html5Qrcode('qr-reader-file');
+            const result = await qr.scanFile(file, false);
+            qr.clear();
+            handleScanResult(result);
+        } catch {
+            setScanResult('❌ QR code tidak ditemukan di gambar ini.');
+            setTimeout(() => setScanResult(''), 3000);
+        }
     };
 
     const resetAddForm = () => {
@@ -514,10 +535,34 @@ export const AdminDashboard = () => {
             {/* QR Scanner */}
             {showScanner && (
                 <div className="max-w-7xl mx-auto mb-6 bg-night-800/50 border border-accent-green/30 rounded-lg p-6">
-                    <h3 className="text-xl text-accent-yellow mb-4">QR Code Scanner</h3>
-                    <div id="qr-reader" className="w-full max-w-md mx-auto"></div>
-                    {scanResult && (
-                        <div className="mt-4 text-center text-lg text-white">{scanResult}</div>
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-xl text-accent-yellow">QR Code Scanner</h3>
+                        <button onClick={() => { stopCamera(); setShowScanner(false); setScanResult(''); }} className="text-white/40 hover:text-white text-sm transition-colors">✕ Tutup</button>
+                    </div>
+                    {scanResult ? (
+                        <div className="text-center py-10 text-xl text-white">{scanResult}</div>
+                    ) : !cameraActive ? (
+                        <div className="flex flex-col items-center gap-4 py-6">
+                            <button
+                                onClick={startCamera}
+                                className="bg-accent-yellow hover:bg-accent-green text-night font-bold text-lg py-4 px-10 rounded-xl transition-all flex items-center gap-3 shadow-lg active:scale-95"
+                            >
+                                📷 Izinkan Kamera & Mulai Scan
+                            </button>
+                            <p className="text-white/40 text-sm">atau</p>
+                            <label className="cursor-pointer bg-white/10 hover:bg-white/20 text-white py-3 px-8 rounded-lg transition-all text-sm flex items-center gap-2 active:scale-95">
+                                🖼️ Upload Gambar QR
+                                <input type="file" accept="image/*" className="hidden" onChange={handleScanFile} />
+                            </label>
+                            <div id="qr-reader-file" className="hidden"></div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-4">
+                            <div id="qr-reader" className="w-full max-w-sm mx-auto rounded-lg overflow-hidden"></div>
+                            <button onClick={stopCamera} className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-10 rounded-lg transition-all">
+                                ✕ Batal Scan
+                            </button>
+                        </div>
                     )}
                 </div>
             )}
