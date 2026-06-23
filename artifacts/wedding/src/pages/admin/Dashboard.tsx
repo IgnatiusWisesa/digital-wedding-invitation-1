@@ -541,27 +541,33 @@ export const AdminDashboard = () => {
                     </div>
                     {scanResult ? (
                         <div className="text-center py-10 text-xl text-white">{scanResult}</div>
-                    ) : !cameraActive ? (
-                        <div className="flex flex-col items-center gap-4 py-6">
-                            <button
-                                onClick={startCamera}
-                                className="bg-accent-yellow hover:bg-accent-green text-night font-bold text-lg py-4 px-10 rounded-xl transition-all flex items-center gap-3 shadow-lg active:scale-95"
-                            >
-                                📷 Izinkan Kamera & Mulai Scan
-                            </button>
-                            <p className="text-white/40 text-sm">atau</p>
-                            <label className="cursor-pointer bg-white/10 hover:bg-white/20 text-white py-3 px-8 rounded-lg transition-all text-sm flex items-center gap-2 active:scale-95">
-                                🖼️ Upload Gambar QR
-                                <input type="file" accept="image/*" className="hidden" onChange={handleScanFile} />
-                            </label>
-                            <div id="qr-reader-file" className="hidden"></div>
-                        </div>
                     ) : (
                         <div className="flex flex-col items-center gap-4">
-                            <div id="qr-reader" className="w-full max-w-sm mx-auto rounded-lg overflow-hidden"></div>
-                            <button onClick={stopCamera} className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-10 rounded-lg transition-all">
-                                ✕ Batal Scan
-                            </button>
+                            {/* Always in DOM so Html5Qrcode can find the element */}
+                            <div id="qr-reader" className={`w-full max-w-sm mx-auto rounded-lg overflow-hidden ${cameraActive ? '' : 'hidden'}`}></div>
+                            <div id="qr-reader-file" className="hidden"></div>
+
+                            {!cameraActive && (
+                                <div className="flex flex-col items-center gap-4 py-6 w-full">
+                                    <button
+                                        onClick={startCamera}
+                                        className="bg-accent-yellow hover:bg-accent-green text-night font-bold text-lg py-4 px-10 rounded-xl transition-all flex items-center gap-3 shadow-lg active:scale-95"
+                                    >
+                                        📷 Izinkan Kamera & Mulai Scan
+                                    </button>
+                                    <p className="text-white/40 text-sm">atau</p>
+                                    <label className="cursor-pointer bg-white/10 hover:bg-white/20 text-white py-3 px-8 rounded-lg transition-all text-sm flex items-center gap-2 active:scale-95">
+                                        🖼️ Upload Gambar QR
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleScanFile} />
+                                    </label>
+                                </div>
+                            )}
+
+                            {cameraActive && (
+                                <button onClick={stopCamera} className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold py-3 px-10 rounded-lg transition-all">
+                                    ✕ Batal Scan
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
